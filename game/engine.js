@@ -1,5 +1,10 @@
 /**
- * dsh-pray v0.2 pure game engine.
+ * dsh-pray v0.3 pure game engine.
+ *
+ * Five named levels form the progression. Level n produces level n-1; level 1
+ * produces expectation. Boost (global reset) resets levels/run amps for a
+ * multiplier; Galaxy (reset of the boost layer) resets boosts/levels for a
+ * bigger multiplier; 释怀 resets the whole run for a permanent multiplier.
  *
  * No DSH imports, no I/O: Host routes call these functions, tests call them
  * directly. Costs/production are tuned in balance.js.
@@ -7,13 +12,14 @@
 import { randomUUID } from 'node:crypto'
 import {
   ACTIVE_SECONDS_PER_WISH,
+  BOOST_MULTIPLIER,
   DAILY_WISH_CAP,
-  DIMENSIONS,
+  GALAXY_MULTIPLIER,
+  LEVELS,
   OFFLINE_CAP_PER_LEVEL_SECONDS,
   OFFLINE_CAP_SECONDS,
   PERMANENT_AMPS,
   RELEASE_THRESHOLD,
-  REALMS,
   RUN_AMPS,
   SCHEMA,
   VERSION,
@@ -21,7 +27,10 @@ import {
   VERSION_BONUS_MULTIPLIER,
   WAITING_BONUS_MAX,
   WAITING_BONUS_PER_DAY,
-  dimensionById,
+  boostCost,
+  galaxyCost,
+  galaxyRequiredBoosts,
+  levelById,
   permanentAmpById,
   runAmpById,
 } from './balance.js'
@@ -50,6 +59,10 @@ function defaultChangelog() {
   }
 }
 
+function emptyLevels() {
+  return Object.fromEntries(LEVELS.map((def) => [def.id, { owned: 0, bought: 0, produced: 0 }]))
+}
+
 export function createState(now = Date.now()) {
   return {
     schema: SCHEMA,
@@ -65,7 +78,9 @@ export function createState(now = Date.now()) {
     release: 0,
     lastReleaseGain: 0,
     lastReleaseAt: null,
-    dimensions: Object.fromEntries(DIMENSIONS.map((def) => [def.id, { owned: 0, bought: 0 }])),
+    boosts: 0,
+    galaxies: 0,
+    levels: emptyLevels(),
     runAmps: Object.fromEntries(RUN_AMPS.map((def) => [def.id, 0])),
     permanentAmps: Object.fromEntries(PERMANENT_AMPS.map((def) => [def.id, 0])),
     activity: {
@@ -97,18 +112,56 @@ export function createState(now = Date.now()) {
 export function migrateState(raw, now = Date.now()) {
   if (!raw || typeof raw !== 'object') return createState(now)
   if (Number(raw.schema) >= SCHEMA) return normalizeState(raw, now)
+
   const state = createState(now)
-  const oldPoints = clamp(raw.points)
   state.installationId = typeof raw.installationId === 'string' && raw.installationId
     ? raw.installationId
     : state.installationId
   state.installedAt = typeof raw.installedAt === 'string' ? raw.installedAt : state.installedAt
-  state.expectation = oldPoints
-  state.lifetimeExpectation = oldPoints
-  state.runExpectation = oldPoints
-  if (raw.changelog && typeof raw.changelog === 'object') {
-    state.changelog = { ...state.changelog, ...raw.changelog }
+  state.expectation = clamp(raw.expectation ?? raw.points)
+  state.lifetimeExpectation = clamp(raw.lifetimeExpectation ?? raw.points)
+  state.runExpectation = clamp(raw.runExpectation ?? raw.points)
+  state.wish = clamp(raw.wish)
+  state.wishEarned = clamp(raw.wishEarned)
+  state.release = clamp(raw.release)
+  state.lastReleaseGain = clamp(raw.lastReleaseGain)
+  state.lastReleaseAt = typeof raw.lastReleaseAt === 'string' ? raw.lastReleaseAt : null
+  state.boosts = Math.max(0, Math.floor(Number(raw.boosts) || 0))
+  state.galaxies = Math.max(0, Math.floor(Number(raw.galaxies) || 0))
+  state.permanentAmps = { ...state.permanentAmps, ...(raw.permanentAmps || {}) }
+  state.activity = { ...state.activity, ...(raw.activity || {}) }
+  state.activity.days = raw.activity?.days && typeof raw.activity.days === 'object' ? raw.activity.days : {}
+  state.eras = Array.isArray(raw.eras) ? raw.eras : []
+  state.changelog = raw.changelog && typeof raw.changelog === 'object'
+    ? { ...state.changelog, ...raw.changelog }
+    : state.changelog
+  state.settings = raw.settings && typeof raw.settings === 'object'
+    ? { ...state.settings, ...raw.settings }
+    : state.settings
+  state.versionBonusUntil = typeof raw.versionBonusUntil === 'string' ? raw.versionBonusUntil : null
+  state.lastVersionBonus = raw.lastVersionBonus && typeof raw.lastVersionBonus === 'object'
+    ? raw.lastVersionBonus
+    : null
+
+  if (Number(raw.schema) === 2 && raw.dimensions) {
+    const map = ['A', 'B', 'C']
+    for (let i = 0; i < map.length; i += 1) {
+      const old = raw.dimensions[map[i]] || {}
+      state.levels[`level${i + 1}`] = {
+        owned: clamp(old.owned),
+        bought: Math.max(0, Math.floor(Number(old.bought) || 0)),
+        produced: 0,
+      }
+    }
+    state.runAmps.level1 = Math.max(0, Math.floor(Number(raw.runAmps?.dimA) || 0))
+    state.runAmps.level2 = Math.max(0, Math.floor(Number(raw.runAmps?.dimB) || 0))
+    state.runAmps.level3 = Math.max(0, Math.floor(Number(raw.runAmps?.dimC) || 0))
+    state.runAmps.level4 = 0
+    state.runAmps.level5 = 0
+    state.runAmps.global = Math.max(0, Math.floor(Number(raw.runAmps?.global) || 0))
   }
+  for (const legacy of ['dimA', 'dimB', 'dimC']) delete state.runAmps[legacy]
+
   state.lastTickAt = iso(now)
   state.lastOffline = null
   return state
@@ -127,17 +180,21 @@ export function normalizeState(raw, now = Date.now()) {
   state.release = clamp(state.release)
   state.lastReleaseGain = clamp(state.lastReleaseGain)
   state.lastReleaseAt = typeof state.lastReleaseAt === 'string' ? state.lastReleaseAt : null
+  state.boosts = Math.max(0, Math.floor(Number(state.boosts) || 0))
+  state.galaxies = Math.max(0, Math.floor(Number(state.galaxies) || 0))
   state.installedAt = typeof state.installedAt === 'string' ? state.installedAt : base.installedAt
   state.lastTickAt = Number.isFinite(Date.parse(state.lastTickAt)) ? state.lastTickAt : iso(now)
-  state.dimensions = state.dimensions && typeof state.dimensions === 'object' ? state.dimensions : {}
-  for (const def of DIMENSIONS) {
-    const dim = state.dimensions[def.id] || {}
-    state.dimensions[def.id] = {
-      owned: clamp(dim.owned),
-      bought: Math.max(0, Math.floor(Number(dim.bought) || 0)),
+  state.levels = state.levels && typeof state.levels === 'object' ? state.levels : {}
+  for (const def of LEVELS) {
+    const level = state.levels[def.id] || {}
+    state.levels[def.id] = {
+      owned: clamp(level.owned),
+      bought: Math.max(0, Math.floor(Number(level.bought) || 0)),
+      produced: clamp(level.produced),
     }
   }
   state.runAmps = state.runAmps && typeof state.runAmps === 'object' ? state.runAmps : {}
+  for (const legacy of ['dimA', 'dimB', 'dimC']) delete state.runAmps[legacy]
   for (const def of RUN_AMPS) {
     state.runAmps[def.id] = Math.max(0, Math.floor(Number(state.runAmps[def.id]) || 0))
   }
@@ -204,35 +261,33 @@ export function globalMultiplier(state, now = Date.now()) {
   return (1 + 0.25 * (state.runAmps.global || 0)) *
     (1 + 0.1 * (state.permanentAmps.focus || 0)) *
     (1 + 0.1 * state.release) *
+    Math.pow(BOOST_MULTIPLIER, state.boosts || 0) *
+    Math.pow(GALAXY_MULTIPLIER, state.galaxies || 0) *
     versionMultiplier(state, now)
 }
 
-export function dimensionMultiplier(state, id) {
-  const dim = state.dimensions[id]
+export function levelMultiplier(state, id) {
+  const level = state.levels[id]
   const amp = state.runAmps[id] || 0
-  return (1 + 0.5 * amp) * (2 ** Math.floor((dim?.bought || 0) / 10))
+  return (1 + 0.5 * amp) * (2 ** Math.floor((level?.bought || 0) / 10))
 }
 
 export function production(state, now = Date.now()) {
   const global = globalMultiplier(state, now)
   const base = waitingMultiplier(state, now) * global
-  const dimA = dimensionMultiplier(state, 'A')
-  const dimB = dimensionMultiplier(state, 'B')
-  const dimC = dimensionMultiplier(state, 'C')
-  const dims = state.dimensions
-  const prodA = clamp(dims.A.owned * 1 * dimA * global)
-  const prodB = clamp(dims.B.owned * 1 * dimB * global)
-  const prodC = clamp(dims.C.owned * 1 * dimC * global)
+  const mult = [null]
+  const prod = [null]
+  for (const def of LEVELS) {
+    const level = state.levels[def.id]
+    mult[def.index] = levelMultiplier(state, def.id)
+    prod[def.index] = clamp(level.owned * def.baseProduction * mult[def.index] * global)
+  }
   return {
     base,
-    prodA,
-    prodB,
-    prodC,
-    rate: clamp(base + prodA),
+    prod,
+    mult,
+    rate: clamp(base + prod[1]),
     global,
-    dimA,
-    dimB,
-    dimC,
   }
 }
 
@@ -241,8 +296,13 @@ function simulate(state, dt, now) {
   state.expectation = clamp(state.expectation + p.rate * dt)
   state.runExpectation = clamp(state.runExpectation + p.rate * dt)
   state.lifetimeExpectation = clamp(state.lifetimeExpectation + p.rate * dt)
-  state.dimensions.A.owned = clamp(state.dimensions.A.owned + p.prodB * dt)
-  state.dimensions.B.owned = clamp(state.dimensions.B.owned + p.prodC * dt)
+  for (const def of LEVELS) {
+    state.levels[def.id].produced = clamp(state.levels[def.id].produced + p.prod[def.index] * dt)
+  }
+  for (let index = 1; index < LEVELS.length; index += 1) {
+    const lower = LEVELS[index - 1]
+    state.levels[lower.id].owned = clamp(state.levels[lower.id].owned + p.prod[index + 1] * dt)
+  }
 }
 
 export function advance(state, now = Date.now()) {
@@ -269,15 +329,15 @@ export function advance(state, now = Date.now()) {
   return state.lastOffline
 }
 
-export function dimensionUnitCost(state, def, bought = state.dimensions[def.id].bought) {
+export function levelUnitCost(state, def, bought = state.levels[def.id].bought) {
   const block = Math.floor(Math.max(0, bought) / 10)
   return def.baseCost * Math.pow(def.costGrowth, block)
 }
 
-export function dimensionCost(state, id, count = 1) {
-  const def = dimensionById(id)
+export function levelCost(state, id, count = 1) {
+  const def = levelById(id)
   if (!def) return null
-  const bought = state.dimensions[id].bought
+  const bought = state.levels[id].bought
   const isMax = count === 'max'
   const limit = isMax ? 10000 : count
   const budget = isMax ? state.expectation : Infinity
@@ -285,7 +345,7 @@ export function dimensionCost(state, id, count = 1) {
   let boughtCursor = bought
   let purchased = 0
   while (purchased < limit) {
-    const unit = dimensionUnitCost(state, def, boughtCursor)
+    const unit = levelUnitCost(state, def, boughtCursor)
     if (!Number.isFinite(unit) || total + unit > budget) break
     total += unit
     boughtCursor += 1
@@ -298,19 +358,19 @@ export function dimensionCost(state, id, count = 1) {
   }
 }
 
-export function buyDimension(state, id, count = 1) {
-  const def = dimensionById(id)
-  if (!def) return { ok: false, error: '未知维度' }
+export function buyLevel(state, id, count = 1) {
+  const def = levelById(id)
+  if (!def) return { ok: false, error: '未知 Level' }
   if (state.lifetimeExpectation < def.unlockAt) {
     return { ok: false, error: `累计期待达到 ${def.unlockAt} 后解锁` }
   }
-  const plan = dimensionCost(state, id, count)
-  if (!plan) return { ok: false, error: '未知维度' }
+  const plan = levelCost(state, id, count)
+  if (!plan) return { ok: false, error: '未知 Level' }
   if (count !== 'max' && !plan.affordable) return { ok: false, error: '期待不足' }
   if (plan.purchased <= 0) return { ok: false, error: '期待不足' }
   state.expectation = clamp(state.expectation - plan.total)
-  state.dimensions[id].owned = clamp(state.dimensions[id].owned + plan.purchased)
-  state.dimensions[id].bought += plan.purchased
+  state.levels[id].owned = clamp(state.levels[id].owned + plan.purchased)
+  state.levels[id].bought += plan.purchased
   return { ok: true, purchased: plan.purchased, total: plan.total }
 }
 
@@ -344,6 +404,60 @@ export function buyPermanentAmp(state, id) {
   return { ok: true, level: state.permanentAmps[id], total: cost }
 }
 
+export function currentBoostCost(state) {
+  return boostCost(state.boosts || 0)
+}
+
+export function currentGalaxyCost(state) {
+  return galaxyCost(state.galaxies || 0)
+}
+
+export function currentGalaxyRequired(state) {
+  return galaxyRequiredBoosts(state.galaxies || 0)
+}
+
+export function canBoost(state) {
+  return state.expectation >= currentBoostCost(state)
+}
+
+export function canGalaxy(state) {
+  return (state.boosts || 0) >= currentGalaxyRequired(state) &&
+    state.expectation >= currentGalaxyCost(state)
+}
+
+function resetLevelsAndAmps(state) {
+  for (const def of LEVELS) {
+    state.levels[def.id].owned = 0
+    state.levels[def.id].bought = 0
+  }
+  for (const def of RUN_AMPS) state.runAmps[def.id] = 0
+}
+
+export function boost(state) {
+  const cost = currentBoostCost(state)
+  if (state.expectation < cost) return { ok: false, error: '期待不足，无法 Boost' }
+  state.expectation = 0
+  state.boosts = (state.boosts || 0) + 1
+  resetLevelsAndAmps(state)
+  state.lastOffline = null
+  return { ok: true, cost, boosts: state.boosts }
+}
+
+export function galaxy(state) {
+  const required = currentGalaxyRequired(state)
+  const cost = currentGalaxyCost(state)
+  if ((state.boosts || 0) < required) {
+    return { ok: false, error: `需要 ${required} 次 Boost 才能 Galaxy` }
+  }
+  if (state.expectation < cost) return { ok: false, error: '期待不足，无法 Galaxy' }
+  state.expectation = 0
+  state.galaxies = (state.galaxies || 0) + 1
+  state.boosts = 0
+  resetLevelsAndAmps(state)
+  state.lastOffline = null
+  return { ok: true, cost, required, galaxies: state.galaxies }
+}
+
 export function releaseGain(state) {
   if (state.runExpectation < RELEASE_THRESHOLD) return 0
   return Math.max(1, Math.floor(Math.sqrt(state.runExpectation / RELEASE_THRESHOLD)))
@@ -359,28 +473,19 @@ export function release(state, now = Date.now()) {
   state.lastReleaseAt = iso(now)
   state.expectation = 0
   state.runExpectation = 0
-  for (const def of DIMENSIONS) {
-    state.dimensions[def.id] = { owned: 0, bought: 0 }
-  }
-  for (const def of RUN_AMPS) state.runAmps[def.id] = 0
+  state.boosts = 0
+  state.galaxies = 0
+  resetLevelsAndAmps(state)
   state.lastOffline = null
   return { ok: true, gain, release: state.release }
 }
 
-export function realmFor(lifetimeExpectation) {
-  let index = 0
-  for (let i = 0; i < REALMS.length; i += 1) {
-    if (lifetimeExpectation >= REALMS[i].at) index = i
+function highestLevelIndex(state) {
+  let index = 1
+  for (const def of LEVELS) {
+    if (state.lifetimeExpectation >= def.unlockAt) index = def.index
   }
-  const current = REALMS[index]
-  const next = REALMS[index + 1] || null
-  const span = next ? next.at - current.at : 0
-  return {
-    index,
-    current,
-    next,
-    progress: next && span > 0 ? Math.min(1, (lifetimeExpectation - current.at) / span) : 1,
-  }
+  return index
 }
 
 export function syncEra(state, now = Date.now()) {
@@ -403,34 +508,28 @@ export function syncEra(state, now = Date.now()) {
   return true
 }
 
-function nextUnlock(state) {
-  const nextDimension = DIMENSIONS.find((def) => state.lifetimeExpectation < def.unlockAt)
-  if (nextDimension) {
-    return { kind: 'dimension', id: nextDimension.id, name: nextDimension.name, at: nextDimension.unlockAt }
-  }
-  const nextRealm = REALMS.find((realm) => state.lifetimeExpectation < realm.at)
-  if (nextRealm) {
-    return { kind: 'realm', name: nextRealm.name, at: nextRealm.at, image: nextRealm.image || null }
-  }
-  return null
-}
-
 export function view(state, now = Date.now()) {
   const p = production(state, now)
-  const realm = realmFor(state.lifetimeExpectation)
+  const highestIndex = highestLevelIndex(state)
+  const highest = LEVELS[highestIndex - 1]
+  const next = LEVELS[highestIndex] || null
+  const nextProgress = next
+    ? Math.min(1, Math.max(0, (state.lifetimeExpectation - highest.unlockAt) / (next.unlockAt - highest.unlockAt)))
+    : 1
   const dailyCap = DAILY_WISH_CAP + 5 * (state.permanentAmps.echo || 0)
-  const dimensions = DIMENSIONS.map((def) => {
-    const dim = state.dimensions[def.id]
-    const cost1 = dimensionUnitCost(state, def, dim.bought)
-    const plan10 = dimensionCost(state, def.id, 10)
+  const levels = LEVELS.map((def) => {
+    const level = state.levels[def.id]
+    const cost1 = levelUnitCost(state, def, level.bought)
+    const plan10 = levelCost(state, def.id, 10)
     const unlocked = state.lifetimeExpectation >= def.unlockAt
     return {
       ...def,
-      owned: dim.owned,
-      bought: dim.bought,
+      owned: level.owned,
+      bought: level.bought,
+      produced: level.produced,
       unlocked,
-      production: def.id === 'A' ? p.prodA : def.id === 'B' ? p.prodB : p.prodC,
-      multiplier: def.id === 'A' ? p.dimA : def.id === 'B' ? p.dimB : p.dimC,
+      production: p.prod[def.index],
+      multiplier: p.mult[def.index],
       cost1,
       cost10: plan10?.total ?? Infinity,
       canBuy1: unlocked && state.expectation >= cost1,
@@ -469,19 +568,35 @@ export function view(state, now = Date.now()) {
     releaseMultiplier: 1 + 0.1 * state.release,
     lastReleaseGain: state.lastReleaseGain,
     lastReleaseAt: state.lastReleaseAt,
-    dimensions,
+    levels,
+    highestLevel: {
+      index: highest.index,
+      name: highest.name,
+      image: highest.image || null,
+    },
+    nextLevel: next
+      ? {
+          index: next.index,
+          name: next.name,
+          image: next.image || null,
+          at: next.unlockAt,
+          progress: nextProgress,
+        }
+      : null,
+    boosts: state.boosts || 0,
+    galaxies: state.galaxies || 0,
+    boostCost: currentBoostCost(state),
+    galaxyCost: currentGalaxyCost(state),
+    galaxyRequiredBoosts: currentGalaxyRequired(state),
+    canBoost: canBoost(state),
+    canGalaxy: canGalaxy(state),
+    boostMultiplier: Math.pow(BOOST_MULTIPLIER, state.boosts || 0),
+    galaxyMultiplier: Math.pow(GALAXY_MULTIPLIER, state.galaxies || 0),
     runAmps,
     permanentAmps,
-    realm: {
-      index: realm.index,
-      at: realm.current.at,
-      name: realm.current.name,
-      image: realm.current.image || null,
-      next: realm.next ? { at: realm.next.at, name: realm.next.name, image: realm.next.image || null } : null,
-      progress: realm.progress,
-    },
-    realms: REALMS,
-    nextUnlock: nextUnlock(state),
+    nextUnlock: next
+      ? { kind: 'level', index: next.index, name: next.name, at: next.unlockAt }
+      : { kind: 'boost', name: 'Boost', at: currentBoostCost(state) },
     canRelease: state.runExpectation >= RELEASE_THRESHOLD,
     releaseGain: releaseGain(state),
     releaseThreshold: RELEASE_THRESHOLD,

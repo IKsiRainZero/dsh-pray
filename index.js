@@ -14,11 +14,13 @@ import { dirname, join } from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import {
-  buyDimension,
+  boost,
+  buyLevel,
   buyPermanentAmp,
   buyRunAmp,
   createState,
   advance,
+  galaxy,
   migrateState,
   normalizeState,
   release,
@@ -30,7 +32,7 @@ import { onSessionCreated, onSessionDisposed, onSessionEvent } from './game/acti
 export const name = 'dsh-pray'
 export const inject = ['webServer']
 
-const VERSION = '0.2.0'
+const VERSION = '0.3.0'
 const DEFAULT_CHANGELOG_URL = 'https://api-docs.deepseek.com/zh-cn/updates.md'
 const CHANGELOG_TTL_MS = 30 * 60 * 1000
 const CHANGELOG_RETRY_MS = 2 * 60 * 1000
@@ -223,12 +225,16 @@ async function handleAction(req, res, statePromise) {
   advance(state, Date.now())
   const type = payload?.type
   let result = { ok: false, error: '未知操作' }
-  if (type === 'buyDimension') {
-    result = buyDimension(state, payload.tier, payload.count === 'max' ? 'max' : Number(payload.count) === 10 ? 10 : 1)
+  if (type === 'buyLevel') {
+    result = buyLevel(state, payload.id, payload.count === 'max' ? 'max' : Number(payload.count) === 10 ? 10 : 1)
   } else if (type === 'buyRunAmp') {
     result = buyRunAmp(state, payload.id)
   } else if (type === 'buyPermanentAmp') {
     result = buyPermanentAmp(state, payload.id)
+  } else if (type === 'boost') {
+    result = boost(state)
+  } else if (type === 'galaxy') {
+    result = galaxy(state)
   } else if (type === 'release') {
     result = release(state, Date.now())
   } else if (type === 'setNotation') {
