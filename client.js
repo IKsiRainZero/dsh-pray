@@ -2,8 +2,6 @@ window.__ModuleLoader__.load({
   id: 'dsh-pray',
   factory(require) {
     const React = require('react')
-    let ReactDOM = null
-    try { ReactDOM = require('react-dom') } catch { /* optional portal support */ }
     const { useCallback, useEffect, useMemo, useRef, useState } = React
     const h = React.createElement
 
@@ -16,7 +14,8 @@ window.__ModuleLoader__.load({
         panelLabel: '期待',
         kicker: '本地单机 · 注意力保护',
         collapse: '收成小火苗',
-        hide: '隐藏卡片（侧栏可恢复）',
+        hide: '关闭（侧栏可恢复）',
+        closeCard: '关闭',
         expand: '展开',
         since: '距 DeepSeek 上次更新',
         anchorNote: '锚点：更新日 00:00 (UTC+8)',
@@ -147,7 +146,7 @@ window.__ModuleLoader__.load({
         cardShow: '展开完整卡片',
         cardHide: '收成小火苗',
         flameHint: '点一下展开',
-        cardViewNote: '完整卡片，或者一簇小火苗；火苗鼠标停留才显示简要面板。',
+        cardViewNote: '完整卡片、一簇小火苗，或者关闭；关闭后可在侧栏页头/设置重新打开。',
         noticeTitle: '首先',
         noticeBody: 'dsh-pray 是一个本地单机小游戏，想做的只是把「等待 DeepSeek 更新」和「你真实用 DSH 的时间」变成一点可见的积累。',
         noticeAttention: '我们无意占据你的注意力，但它仍然可能让你想多看一眼数字——这是它的风险。所以默认的注意力保护模式会自动买 Level，并把右下角收成一簇小火苗；鼠标停留才显示简要面板，移开就消失。',
@@ -171,7 +170,8 @@ window.__ModuleLoader__.load({
         panelLabel: 'Expectation',
         kicker: 'local single-player · attention protection',
         collapse: 'Collapse to flame',
-        hide: 'Hide card (restore in sidebar)',
+        hide: 'Close (restore in sidebar)',
+        closeCard: 'Close',
         expand: 'Expand',
         since: 'Since DeepSeek last updated',
         anchorNote: 'Anchor: update day 00:00 (UTC+8)',
@@ -302,7 +302,7 @@ window.__ModuleLoader__.load({
         cardShow: 'Expand full card',
         cardHide: 'Collapse to flame',
         flameHint: 'Click to expand',
-        cardViewNote: 'Full card, or a small flame; hover the flame for a brief panel.',
+        cardViewNote: 'Full card, small flame, or closed; reopen from the sidebar header/settings.',
         noticeTitle: 'First',
         noticeBody: 'dsh-pray is a local single-player game. It only turns “waiting for a DeepSeek update” and “time you actually spend in DSH” into a small visible accumulation.',
         noticeAttention: 'We do not intend to take your attention, but it can still make you want one more look at the numbers — that is the risk. The default attention-protection mode buys levels automatically and keeps the bottom-right as a small flame; hover to see a brief panel, move away and it disappears.',
@@ -554,15 +554,15 @@ window.__ModuleLoader__.load({
     function getCardView() {
       try {
         const current = localStorage.getItem(CARD_VIEW_KEY)
-        if (current === 'flame' || current === 'full') return current
-        return localStorage.getItem('dsh-pray-card-visible') === '0' ? 'flame' : 'full'
+        if (current === 'flame' || current === 'full' || current === 'hidden') return current
+        return localStorage.getItem('dsh-pray-card-visible') === '0' ? 'hidden' : 'full'
       } catch {
         return 'full'
       }
     }
 
     function setCardView(view) {
-      const next = view === 'flame' ? 'flame' : 'full'
+      const next = view === 'flame' ? 'flame' : view === 'hidden' ? 'hidden' : 'full'
       try { localStorage.setItem(CARD_VIEW_KEY, next) } catch { /* ignore */ }
       try { window.dispatchEvent(new CustomEvent('dsh-pray-card-view', { detail: next })) } catch { /* ignore */ }
     }
@@ -701,13 +701,6 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function Portal({ children }) {
-      if (ReactDOM && typeof document !== 'undefined' && document.body) {
-        return ReactDOM.createPortal(children, document.body)
-      }
-      return children
-    }
-
     function FirstRunNotice(props) {
       const t = makeT(props)
       const [open, setOpen] = useState(() => !getStoredBool(NOTICE_KEY, false))
@@ -798,6 +791,7 @@ window.__ModuleLoader__.load({
               'div',
               { className: 'dsh-pray-head-actions' },
               h('button', { type: 'button', className: 'dsh-pray-icon', onClick: () => props.onCollapse?.(), title: t('collapse'), 'aria-label': t('collapse') }, '−'),
+              h('button', { type: 'button', className: 'dsh-pray-icon', onClick: () => props.onClose?.(), title: t('hide'), 'aria-label': t('hide') }, '×'),
             ),
           ),
           h(
@@ -898,8 +892,9 @@ window.__ModuleLoader__.load({
         window.addEventListener('dsh-pray-card-view', onChange)
         return () => window.removeEventListener('dsh-pray-card-view', onChange)
       }, [])
-      if (view === 'flame') return h(Portal, null, h(FlameCard, { ...props, onExpand: () => setCardView('full') }))
-      return h(Portal, null, h(PrayCard, { ...props, onCollapse: () => setCardView('flame') }))
+      if (view === 'hidden') return null
+      if (view === 'flame') return h(FlameCard, { ...props, onExpand: () => setCardView('full') })
+      return h(PrayCard, { ...props, onCollapse: () => setCardView('flame'), onClose: () => setCardView('hidden') })
     }
 
     function StatCard({ label, value, note, accent, small }) {
@@ -1380,6 +1375,10 @@ window.__ModuleLoader__.load({
                 className: `dsh-pray-btn${cardView === 'flame' ? ' primary' : ''}`,
                 onClick: () => { setCardView('flame'); setCardViewState('flame') },
               }, t('cardHide')),
+              h('button', {
+                className: `dsh-pray-btn${cardView === 'hidden' ? ' primary' : ''}`,
+                onClick: () => { setCardView('hidden'); setCardViewState('hidden') },
+              }, t('closeCard')),
             ),
           ),
           h(
@@ -1461,6 +1460,9 @@ window.__ModuleLoader__.load({
               h('div', null, state.latestUpdate || '—'),
               h('div', null, formatDuration(seconds, t)),
               h('div', null, auto ? t('modeAutoTag') : t('modePlayTag')),
+              cardView === 'hidden'
+                ? h('button', { className: 'dsh-pray-btn', style: { marginTop: 6 }, onClick: () => { setCardView('full'); setCardViewState('full') } }, t('cardShow'))
+                : null,
             ),
           ),
           h(

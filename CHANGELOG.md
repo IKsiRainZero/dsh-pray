@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- Fix the flame pushing the whole DSH page up: remove the `document.body` portal and render the fixed card/flame back through `shell.overlay`.
+- Restore `×` close on the full card; after closing, reopen from the sidebar header or Settings.
+- Keep `−` to collapse into the flame and hover for the brief panel.
+
 ## 0.6.0
 
 - Remove the hard expectation cap; add per-level **throughput ceilings** so speed saturates naturally without a hard stop.
