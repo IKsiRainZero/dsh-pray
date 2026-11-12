@@ -10,6 +10,7 @@ import {
   migrateState,
   release,
   releaseGain,
+  repairState,
   resetRun,
   syncEra,
   urge,
@@ -134,6 +135,18 @@ assert.equal(resetState.launches, 0)
 assert.equal(resetState.wish, 9, 'reset keeps wish')
 assert.equal(resetState.release, 2, 'reset keeps release')
 assert.ok(resetState.achievements.includes('first_release'))
+
+const repaired = createState(now)
+repaired.release = 38_170_117
+repaired.wish = 7
+repaired.achievements = ['first_release']
+repaired.lifetimeExpectation = 1e27
+const repairResult = repairState(repaired, now)
+assert.equal(repairResult.ok, true)
+assert.equal(repaired.release, 0)
+assert.equal(repaired.lifetimeExpectation, 0)
+assert.equal(repaired.wish, 7)
+assert.ok(repaired.achievements.includes('first_release'))
 
 const activity = createState(now)
 const session = { id: 's1', header: { createdAt: now } }

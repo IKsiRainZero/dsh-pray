@@ -503,6 +503,20 @@ export function resetRun(state, now = Date.now()) {
   return { ok: true }
 }
 
+/**
+ * Repair a save polluted by the v0.4.0 runaway. Unlike resetRun, this also
+ * clears the release layer (which could have been inflated to millions of
+ * permanent multiplier points by one huge release). Keeps wish power,
+ * achievements, archive, and settings.
+ */
+export function repairState(state, now = Date.now()) {
+  resetRun(state, now)
+  state.release = 0
+  state.lastReleaseGain = 0
+  state.lastReleaseAt = null
+  return { ok: true, repaired: true }
+}
+
 export function currentUrgeCost(state) {
   return urgeCost(state.urges || 0)
 }

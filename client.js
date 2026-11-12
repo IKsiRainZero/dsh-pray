@@ -125,6 +125,10 @@ window.__ModuleLoader__.load({
         resetRunNote: '保留愿力、释怀、成就、档案；清空本轮期待、Level、催更/发版、增幅器。',
         resetRunConfirm: '再点一次确认：本轮进度会清空，愿力/释怀/成就保留。',
         resetRunDone: '本轮已重开。',
+        repairState: '修复存档',
+        repairStateNote: '重置释怀倍率和本轮进度；保留愿力、成就、档案。',
+        repairStateConfirm: '再点一次确认：释怀倍率会归零，成就/愿力保留。',
+        repairStateDone: '存档已修复。',
         anomalyTitle: '数值异常',
         anomalyDesc: '检测到本轮数值已经失衡（旧版自动购买跑飞）。建议重开本轮；愿力、释怀、成就保留。',
         switchToPlay: '切到游玩模式',
@@ -266,6 +270,10 @@ window.__ModuleLoader__.load({
         resetRunNote: 'Keeps wish power, release, achievements, and archive; clears this run’s expectation, levels, urges, launches, and amplifiers.',
         resetRunConfirm: 'Click again: this run’s progress clears; wish power, release, and achievements stay.',
         resetRunDone: 'Fresh run started.',
+        repairState: 'Repair save',
+        repairStateNote: 'Resets the release multiplier and this run; keeps wish power, achievements, and archive.',
+        repairStateConfirm: 'Click again: the release multiplier goes to zero; achievements and wish power stay.',
+        repairStateDone: 'Save repaired.',
         anomalyTitle: 'Numbers out of range',
         anomalyDesc: 'This run’s numbers are out of balance (the old auto-buy ran away). Start a fresh run; wish power, release, and achievements stay.',
         switchToPlay: 'Switch to play mode',
@@ -917,6 +925,8 @@ window.__ModuleLoader__.load({
           setNotice(t('launchDone'))
         } else if (result?.ok && body.type === 'resetRun') {
           setNotice(t('resetRunDone'))
+        } else if (result?.ok && body.type === 'repairState') {
+          setNotice(t('repairStateDone'))
         }
       }
 
@@ -970,7 +980,15 @@ window.__ModuleLoader__.load({
                       h('button', { className: 'dsh-pray-btn warn', disabled: busy, onClick: () => run({ type: 'resetRun' }) }, t('resetRunConfirm')),
                       h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset(null) }, t('cancel')),
                     )
-                  : h('button', { className: 'dsh-pray-btn warn', onClick: () => setConfirmReset('resetRun') }, t('resetRun')),
+                  : confirmReset === 'repairState'
+                    ? h(React.Fragment, null,
+                        h('button', { className: 'dsh-pray-btn warn', disabled: busy, onClick: () => run({ type: 'repairState' }) }, t('repairStateConfirm')),
+                        h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset(null) }, t('cancel')),
+                      )
+                    : h(React.Fragment, null,
+                        h('button', { className: 'dsh-pray-btn warn', onClick: () => setConfirmReset('resetRun') }, t('resetRun')),
+                        h('button', { className: 'dsh-pray-btn warn', onClick: () => setConfirmReset('repairState') }, t('repairState')),
+                      ),
               ),
             )
           : null,
@@ -1242,6 +1260,17 @@ window.__ModuleLoader__.load({
                   h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset(null) }, t('cancel')),
                 )
               : h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset('resetRun') }, t('resetRun')),
+          ),
+          h('div', { className: 'dsh-pray-note', style: { marginTop: 10 } }, t('repairStateNote')),
+          h(
+            'div',
+            { className: 'dsh-pray-actions' },
+            confirmReset === 'repairState'
+              ? h(React.Fragment, null,
+                  h('button', { className: 'dsh-pray-btn warn', disabled: busy, onClick: () => run({ type: 'repairState' }) }, t('repairStateConfirm')),
+                  h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset(null) }, t('cancel')),
+                )
+              : h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset('repairState') }, t('repairState')),
           ),
         ),
         h(

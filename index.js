@@ -24,6 +24,7 @@ import {
   advance,
   migrateState,
   release,
+  repairState,
   resetRun,
   syncEra,
   view,
@@ -242,6 +243,8 @@ async function handleAction(req, res, statePromise) {
     result = release(state, Date.now())
   } else if (type === 'resetRun') {
     result = resetRun(state, Date.now())
+  } else if (type === 'repairState') {
+    result = repairState(state, Date.now())
   } else if (type === 'setMode') {
     const mode = String(payload.mode || '')
     if (mode !== 'attention' && mode !== 'play') {
