@@ -2,6 +2,8 @@ window.__ModuleLoader__.load({
   id: 'dsh-pray',
   factory(require) {
     const React = require('react')
+    let ReactDOM = null
+    try { ReactDOM = require('react-dom') } catch { /* optional portal support */ }
     const { useCallback, useEffect, useMemo, useRef, useState } = React
     const h = React.createElement
 
@@ -70,8 +72,8 @@ window.__ModuleLoader__.load({
         openCodex: '读注脚',
         closeCodex: '收起注脚',
         termUse: '怎么用',
-        softcap: '期待上限',
-        softcapNote: '本轮期待上限是 1e12；到达后停止增长，等你释怀或重开本轮。',
+        softcap: '吞吐上限',
+        softcapNote: '每层产出有吞吐上限，速度会自然饱和；期待本身没有硬上限。释怀门槛仍是 1e12。',
         permanentBonus: '永久加成',
         temporaryBonus: '临时加成',
         totalMultiplier: '总倍率',
@@ -225,8 +227,8 @@ window.__ModuleLoader__.load({
         openCodex: 'Read note',
         closeCodex: 'Hide note',
         termUse: 'How to use it',
-        softcap: 'Expectation cap',
-        softcapNote: 'This run caps expectation at 1e12; growth stops there until you let go or start a fresh run.',
+        softcap: 'Throughput ceiling',
+        softcapNote: 'Each level has a throughput ceiling, so speed naturally saturates; expectation itself has no hard cap. The release threshold stays 1e12.',
         permanentBonus: 'Permanent bonus',
         temporaryBonus: 'Temporary bonus',
         totalMultiplier: 'Total multiplier',
@@ -372,7 +374,7 @@ window.__ModuleLoader__.load({
       .dsh-pray-pill-points { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 650; font-size: 13px; }
       .dsh-pray-pill-rate { font-size: 10px; color: var(--dsw-alias-state-success-primary); }
       .dsh-pray-pill-level { font-size: 10px; color: var(--dsw-alias-label-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .dsh-pray-flame-root { position: fixed; right: 18px; bottom: 18px; z-index: 40; pointer-events: auto; }
+      .dsh-pray-flame-root { position: fixed; right: 18px; bottom: 18px; z-index: 2147482000; pointer-events: auto; }
       .dsh-pray-flame-btn { position: relative; width: 46px; height: 46px; border: 0; border-radius: 50%;
         background: color-mix(in srgb, var(--dsw-alias-bg-overlay) 82%, transparent); cursor: pointer;
         display: grid; place-items: center; color: var(--dsw-alias-brand-primary);
@@ -699,6 +701,13 @@ window.__ModuleLoader__.load({
       )
     }
 
+    function Portal({ children }) {
+      if (ReactDOM && typeof document !== 'undefined' && document.body) {
+        return ReactDOM.createPortal(children, document.body)
+      }
+      return children
+    }
+
     function FirstRunNotice(props) {
       const t = makeT(props)
       const [open, setOpen] = useState(() => !getStoredBool(NOTICE_KEY, false))
@@ -889,8 +898,8 @@ window.__ModuleLoader__.load({
         window.addEventListener('dsh-pray-card-view', onChange)
         return () => window.removeEventListener('dsh-pray-card-view', onChange)
       }, [])
-      if (view === 'flame') return h(FlameCard, { ...props, onExpand: () => setCardView('full') })
-      return h(PrayCard, { ...props, onCollapse: () => setCardView('flame') })
+      if (view === 'flame') return h(Portal, null, h(FlameCard, { ...props, onExpand: () => setCardView('full') }))
+      return h(Portal, null, h(PrayCard, { ...props, onCollapse: () => setCardView('flame') }))
     }
 
     function StatCard({ label, value, note, accent, small }) {
@@ -903,8 +912,7 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function LevelRow({ level, t, notation, busy, auto, run }) {
-      const [codex, setCodex] = useState(false)
+    function LevelRow({ level, t, notation, busy, auto, run, onOpenStory }) {
       const cost10 = Number.isFinite(level.cost10) ? formatNumber(level.cost10, notation) : '∞'
       return h(
         'div',
@@ -927,18 +935,8 @@ window.__ModuleLoader__.load({
             'div',
             { className: 'dsh-pray-level-term' },
             h('span', { className: 'dsh-pray-term-badge' }, level.term || t('term')),
-            h('button', { type: 'button', className: 'dsh-pray-btn ghost', onClick: () => setCodex(!codex) }, codex ? t('closeCodex') : t('openCodex')),
+            h('button', { type: 'button', className: 'dsh-pray-btn ghost', onClick: () => onOpenStory?.() }, t('openCodex')),
           ),
-          codex
-            ? h(
-                'div',
-                { className: 'dsh-pray-codex' },
-                h('div', { className: 'dsh-pray-codex-title' }, level.term),
-                h('div', { className: 'dsh-pray-note' }, level.termText),
-                h('div', { className: 'dsh-pray-codex-use' }, h('strong', null, t('termUse')), '：', level.termUse),
-                h('div', { className: 'dsh-pray-note', style: { marginTop: 6 } }, level.story),
-              )
-            : null,
         ),
         h(
           'div',
@@ -1174,6 +1172,7 @@ window.__ModuleLoader__.load({
           busy,
           auto,
           run,
+          onOpenStory: () => setTab('story'),
         }))),
         h(
           'div',

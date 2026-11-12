@@ -6,12 +6,11 @@
  * first-class setting: automatic purchases, card hidden by default.
  */
 
-export const VERSION = '0.5.0'
+export const VERSION = '0.6.0'
 export const SCHEMA = 5
 
 export const RELEASE_THRESHOLD = 1e12
-export const EXPECTATION_CAP = 1e12
-export const LEVEL_PURCHASE_MULTIPLIER = 1.5
+export const LEVEL_PURCHASE_MULTIPLIER = 1.2
 export const DAILY_WISH_CAP = 30
 export const ACTIVE_SECONDS_PER_WISH = 600
 export const OFFLINE_CAP_SECONDS = 8 * 3600
@@ -35,8 +34,9 @@ export const LEVELS = [
     index: 1,
     name: '期待下次更新',
     baseCost: 1,
-    costGrowth: 1e3,
+    costGrowth: 1e4,
     baseProduction: 1,
+    throughput: 1e7,
     unlockAt: 0,
     description: '直接产出期待。',
     term: 'SemVer 语义化版本',
@@ -49,8 +49,9 @@ export const LEVELS = [
     index: 2,
     name: '别打扰梁叔叔搞AGI',
     baseCost: 10,
-    costGrowth: 1e4,
+    costGrowth: 1e5,
     baseProduction: 1,
+    throughput: 1e6,
     unlockAt: 1e3,
     description: '产出 Level 1。',
     term: 'AGI 与 MoE',
@@ -63,8 +64,9 @@ export const LEVELS = [
     index: 3,
     name: '谁给ds报名的憋气大赛？',
     baseCost: 1000,
-    costGrowth: 1e5,
+    costGrowth: 1e6,
     baseProduction: 1,
+    throughput: 1e5,
     unlockAt: 1e5,
     description: '产出 Level 2。',
     term: '延迟与吞吐',
@@ -77,8 +79,9 @@ export const LEVELS = [
     index: 4,
     name: 'Pro来✋🏻😡🤚🏻',
     baseCost: 1e5,
-    costGrowth: 1e6,
+    costGrowth: 1e7,
     baseProduction: 1,
+    throughput: 1e4,
     unlockAt: 1e7,
     description: '产出 Level 3。',
     term: '训练与推理',
@@ -91,8 +94,9 @@ export const LEVELS = [
     index: 5,
     name: '我们的deepseek···会变成什么样子',
     baseCost: 1e7,
-    costGrowth: 1e7,
+    costGrowth: 1e8,
     baseProduction: 1,
+    throughput: 1e3,
     unlockAt: 1e9,
     description: '产出 Level 4。',
     term: '缩放定律与涌现',

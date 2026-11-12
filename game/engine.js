@@ -14,7 +14,6 @@ import {
   ACHIEVEMENTS,
   ACTIVE_SECONDS_PER_WISH,
   DAILY_WISH_CAP,
-  EXPECTATION_CAP,
   LAUNCH_MULTIPLIER,
   LEVELS,
   LEVEL_PURCHASE_MULTIPLIER,
@@ -337,7 +336,9 @@ export function production(state, now = Date.now()) {
   for (const def of LEVELS) {
     const level = state.levels[def.id]
     mult[def.index] = levelMultiplier(state, def.id)
-    prod[def.index] = clamp(level.owned * def.baseProduction * mult[def.index] * global)
+    const raw = level.owned * def.baseProduction * mult[def.index]
+    const saturated = raw / (1 + raw / (def.throughput || 1e7))
+    prod[def.index] = clamp(saturated * global)
   }
   return {
     base,
@@ -350,9 +351,7 @@ export function production(state, now = Date.now()) {
 
 function simulate(state, dt, now) {
   const p = production(state, now)
-  const rawGain = p.rate * dt
-  const room = Math.max(0, EXPECTATION_CAP - state.expectation)
-  const gain = Math.min(rawGain, room)
+  const gain = p.rate * dt
   state.expectation = clamp(state.expectation + gain)
   state.runExpectation = clamp(state.runExpectation + gain)
   state.lifetimeExpectation = clamp(state.lifetimeExpectation + gain)
@@ -459,10 +458,10 @@ export function applyAuto(state, passes = 3) {
   if (state.runExpectation >= RELEASE_THRESHOLD) return 0
   let actions = 0
   for (let pass = 0; pass < passes; pass += 1) {
-    if (actions >= 2) break
+    if (actions >= 1) break
     let changed = false
     for (const def of LEVELS) {
-      if (actions >= 2) break
+      if (actions >= 1) break
       if (state.lifetimeExpectation < def.unlockAt) continue
       const plan1 = levelCost(state, def.id, 1)
       if (plan1?.affordable) {
@@ -693,7 +692,7 @@ export function view(state, now = Date.now()) {
     permanentBonus: permanentBonus(state),
     temporaryBonus: temporaryBonus(state, now),
     totalMultiplier: globalMultiplier(state, now),
-    softcapActive: state.expectation >= EXPECTATION_CAP,
+    softcapActive: false,
     achievements: ACHIEVEMENTS.map((def) => ({
       id: def.id,
       name: def.name,

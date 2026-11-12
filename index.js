@@ -33,7 +33,7 @@ import { onSessionCreated, onSessionDisposed, onSessionEvent } from './game/acti
 export const name = 'dsh-pray'
 export const inject = ['webServer']
 
-const VERSION = '0.4.1'
+const VERSION = '0.6.0'
 const DEFAULT_CHANGELOG_URL = 'https://api-docs.deepseek.com/zh-cn/updates.md'
 const CHANGELOG_TTL_MS = 30 * 60 * 1000
 const CHANGELOG_RETRY_MS = 2 * 60 * 1000

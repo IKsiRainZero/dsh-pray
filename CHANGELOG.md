@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+
+- Remove the hard expectation cap; add per-level **throughput ceilings** so speed saturates naturally without a hard stop.
+- Cut level purchase multiplier to ×1.2/10; raise cost growth to 1e4 / 1e5 / 1e6 / 1e7 / 1e8 per 10.
+- Attention auto-buy is now 1 action/tick; simulated first-release time ≈ 17.8 h (no manual resets).
+- Move layer notes out of Level rows into the Story page; Level rows link there.
+- Portal the card/flame to `document.body` so the flame is frame-wide, not only on the detail page.
+- Keep the flaming hover panel and “首先” first-run notice.
+
 ## 0.5.0
 
 - Remove per-level run amplifiers entirely; each level now has a **layer note**: story + one technical term + how to use it (SemVer, AGI/MoE, latency/throughput, training/inference, scaling laws/emergence).
