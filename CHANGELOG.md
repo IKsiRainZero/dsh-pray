@@ -5,6 +5,7 @@
 - Rebalance level cost growth to 1e3 / 1e4 / 1e5 / 1e6 / 1e7 per 10; the old Level 1 growth (×100) let attention-mode auto-buy run away.
 - Attention mode now pauses buying when the run can 释怀 and caps auto actions per tick.
 - Add **Start a fresh run** (keeps wish power, release, achievements, archive) and an out-of-range warning for old runaway saves.
+- Add **Repair save** for the rare v0.4.0 save whose release multiplier was inflated by one huge release; it resets the release layer but keeps wish power/achievements.
 
 ## 0.4.0
 
