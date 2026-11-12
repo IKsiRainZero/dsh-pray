@@ -8,6 +8,7 @@ window.__ModuleLoader__.load({
     const NS = 'dshPray'
     const CARD_VIEW_KEY = 'dsh-pray-card-view-v2'
     const NOTICE_KEY = 'dsh-pray-notice-v1'
+    const READ_KEY = 'dsh-pray-read-entries'
     const DICT = {
       zh: {
         title: 'dsh-pray · 期待',
@@ -43,6 +44,7 @@ window.__ModuleLoader__.load({
         tabWish: '愿力',
         tabRelease: '释怀',
         tabStory: '故事',
+        tabKnowledge: '知识',
         tabSettings: '设置',
         nextUnlock: '下一次解锁',
         noNextUnlock: '全部 Level 已解锁',
@@ -155,6 +157,19 @@ window.__ModuleLoader__.load({
         noticeChoosePlay: '我想手动玩',
         noticeLater: '先隐藏卡片，之后再选',
         storyTitle: '故事',
+        knowledgeTitle: '知识地图',
+        knowledgeDsh: 'DSH 组件',
+        knowledgeAi: 'AI 全景',
+        knowledgeNote: '内容会随我的学习/产出更新；当前是 seed 版，不是定稿。点条目展开，读完后可标记已读。',
+        knowledgeLoading: '正在读取知识地图…',
+        knowledgeError: '知识地图加载失败',
+        read: '标记已读',
+        readDone: '已读',
+        readProgress: '已读 {done}/{total}',
+        entryUpdated: '更新于',
+        entryStatus: '状态',
+        expandEntry: '展开',
+        collapseEntry: '收起',
         storyLocked: '解锁 Level {n} 后展开',
         storyChapter: '第 {n} 章',
         achievements: '成就',
@@ -199,6 +214,7 @@ window.__ModuleLoader__.load({
         tabWish: 'Wish',
         tabRelease: 'Let go',
         tabStory: 'Story',
+        tabKnowledge: 'Knowledge',
         tabSettings: 'Settings',
         nextUnlock: 'Next unlock',
         noNextUnlock: 'All levels unlocked',
@@ -311,6 +327,19 @@ window.__ModuleLoader__.load({
         noticeChoosePlay: 'I want to play manually',
         noticeLater: 'Hide the card for now',
         storyTitle: 'Story',
+        knowledgeTitle: 'Knowledge map',
+        knowledgeDsh: 'DSH components',
+        knowledgeAi: 'AI panorama',
+        knowledgeNote: 'This map grows with my learning/output; it is a seed version, not final. Open an entry, then mark it read.',
+        knowledgeLoading: 'Loading knowledge map…',
+        knowledgeError: 'Knowledge map failed to load',
+        read: 'Mark read',
+        readDone: 'Read',
+        readProgress: 'Read {done}/{total}',
+        entryUpdated: 'Updated',
+        entryStatus: 'Status',
+        expandEntry: 'Open',
+        collapseEntry: 'Close',
         storyLocked: 'Unlocks after Level {n}',
         storyChapter: 'Chapter {n}',
         achievements: 'Achievements',
@@ -360,9 +389,11 @@ window.__ModuleLoader__.load({
       .dsh-pray-level-line-inner { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 11px; }
       .dsh-pray-level-name { font-weight: 600; color: var(--dsw-alias-brand-primary); overflow-wrap: anywhere; }
       .dsh-pray-level-next { color: var(--dsw-alias-label-secondary); font-size: 10px; text-align: right; }
-      .dsh-pray-bar { height: 4px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 6px; }
+      .dsh-pray-bar { height: 9px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 7px; }
       .dsh-pray-bar-fill { height: 100%; border-radius: 999px;
-        background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary)); transition: width .5s ease; }
+        background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary));
+        box-shadow: 0 0 14px color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent);
+        transition: width 1.15s cubic-bezier(.2,.8,.2,1); }
       .dsh-pray-foot { display: flex; justify-content: space-between; gap: 10px; align-items: flex-end;
         margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--dsw-alias-border-l1); }
       .dsh-pray-wish { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 650; }
@@ -455,8 +486,11 @@ window.__ModuleLoader__.load({
       .dsh-pray-locked { color: var(--dsw-alias-state-warn-primary); font-size: 11px; text-align: right; }
       .dsh-pray-reset-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 700; }
       .dsh-pray-reset-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-      .dsh-pray-progress { height: 6px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 8px; }
-      .dsh-pray-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary)); }
+      .dsh-pray-progress { height: 12px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 8px; }
+      .dsh-pray-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary));
+        box-shadow: 0 0 18px color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent);
+        transition: width 1.15s cubic-bezier(.2,.8,.2,1); }
+      .dsh-pray-progress-label { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--dsw-alias-label-secondary); }
       .dsh-pray-list { display: flex; flex-direction: column; gap: 8px; }
       .dsh-pray-era { border-left: 2px solid var(--dsw-alias-brand-primary); padding: 4px 0 4px 10px; }
       .dsh-pray-era-date { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; color: var(--dsw-alias-label-secondary); }
@@ -477,6 +511,19 @@ window.__ModuleLoader__.load({
       .dsh-pray-achievement.locked { opacity: .55; }
       .dsh-pray-achievement-name { font-weight: 600; }
       .dsh-pray-achievement-reward { color: var(--dsw-alias-state-success-primary); font-size: 10px; }
+      .dsh-pray-knowledge-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 12px; }
+      .dsh-pray-knowledge-tab { border: 1px solid var(--dsw-alias-border-l1); background: transparent; color: var(--dsw-alias-label-secondary);
+        border-radius: 999px; padding: 5px 10px; font: inherit; font-size: 11px; cursor: pointer; }
+      .dsh-pray-knowledge-tab.active { color: var(--dsw-alias-brand-primary); border-color: var(--dsw-alias-brand-primary); background: color-mix(in srgb, var(--dsw-alias-brand-primary) 8%, transparent); }
+      .dsh-pray-entry { border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; padding: 11px 12px; background: var(--dsw-alias-bg-layer-1); }
+      .dsh-pray-entry + .dsh-pray-entry { margin-top: 8px; }
+      .dsh-pray-entry-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; cursor: pointer; }
+      .dsh-pray-entry-title { font-size: 13px; font-weight: 650; }
+      .dsh-pray-entry-summary { color: var(--dsw-alias-label-secondary); font-size: 11px; margin-top: 3px; }
+      .dsh-pray-entry-body { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--dsw-alias-border-l1); }
+      .dsh-pray-entry-use { color: var(--dsw-alias-label-secondary); font-size: 11px; margin-top: 6px; }
+      .dsh-pray-entry-meta { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 6px; font-size: 10px; color: var(--dsw-alias-label-secondary); }
+      .dsh-pray-chip { border: 1px solid var(--dsw-alias-border-l1); border-radius: 999px; padding: 0 6px; line-height: 17px; }
 
       .dsh-pray-notice { position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: center; justify-content: center;
         background: color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent); padding: 18px; }
@@ -972,7 +1019,31 @@ window.__ModuleLoader__.load({
       const [notice, setNotice] = useState(null)
       const [celebrate, setCelebrate] = useState(null)
       const [cardView, setCardViewState] = useState(() => getCardView())
+      const [story, setStory] = useState(null)
+      const [storyError, setStoryError] = useState(null)
+      const [knowledgeCategory, setKnowledgeCategory] = useState('dsh')
+      const [openEntry, setOpenEntry] = useState(null)
+      const [readIds, setReadIds] = useState(() => {
+        try {
+          const value = JSON.parse(localStorage.getItem(READ_KEY) || '[]')
+          return Array.isArray(value) ? value : []
+        } catch {
+          return []
+        }
+      })
       const animated = useAnimatedNumber(state?.expectation ?? 0, state?.expectationPerSecond ?? 0, 80)
+
+      useEffect(() => {
+        let cancelled = false
+        fetch('/dsh-pray/story', { cache: 'no-store', headers: { accept: 'application/json' } })
+          .then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            return response.json()
+          })
+          .then((data) => { if (!cancelled) { setStory(data); setStoryError(null) } })
+          .catch((error) => { if (!cancelled) setStoryError(String(error?.message || error)) })
+        return () => { cancelled = true }
+      }, [])
 
       useEffect(() => {
         const onChange = (event) => {
@@ -987,6 +1058,14 @@ window.__ModuleLoader__.load({
       const seconds = state?.latestUpdate
         ? Math.max(0, Math.floor((now - Date.parse(`${state.latestUpdate}T00:00:00+08:00`)) / 1000))
         : state?.secondsSinceUpdate ?? null
+
+      const toggleRead = (id) => {
+        setReadIds((current) => {
+          const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+          try { localStorage.setItem(READ_KEY, JSON.stringify(next)) } catch { /* ignore */ }
+          return next
+        })
+      }
 
       const run = async (body) => {
         setNotice(null)
@@ -1024,12 +1103,13 @@ window.__ModuleLoader__.load({
         )
       }
 
-      const tabs = ['level', 'wish', 'release', 'story', 'settings']
+      const tabs = ['level', 'wish', 'release', 'story', 'knowledge', 'settings']
       const tabLabels = {
         level: t('tabLevel'),
         wish: t('tabWish'),
         release: t('tabRelease'),
         story: t('tabStory'),
+        knowledge: t('tabKnowledge'),
         settings: t('tabSettings'),
       }
       const highest = state.highestLevel
@@ -1095,6 +1175,10 @@ window.__ModuleLoader__.load({
           h('div', { className: 'dsh-pray-cardtitle' }, t('nextUnlock')),
           h('div', { className: 'dsh-pray-value small' }, next ? `L${next.index} · ${next.name} · ${formatNumber(next.at, notation)}` : t('noNextUnlock')),
           h('div', { className: 'dsh-pray-progress' }, h('div', { className: 'dsh-pray-progress-fill', style: { width: `${Math.max(2, progress)}%` } })),
+          h('div', { className: 'dsh-pray-progress-label' },
+            h('span', null, next ? `${t('nextLevel')} L${next.index} · ${next.name}` : t('noNextUnlock')),
+            h('span', null, `${progress}%`),
+          ),
           h(
             'div',
             { className: 'dsh-pray-row' },
@@ -1167,7 +1251,7 @@ window.__ModuleLoader__.load({
           busy,
           auto,
           run,
-          onOpenStory: () => setTab('story'),
+          onOpenStory: () => setTab('knowledge'),
         }))),
         h(
           'div',
@@ -1316,6 +1400,80 @@ window.__ModuleLoader__.load({
           : h('div', { className: 'dsh-pray-note' }, t('erasEmpty')),
         state.versionBonusActive ? h('div', { className: 'dsh-pray-note', style: { marginTop: 6, color: 'var(--dsw-alias-state-success-primary)' } }, `${t('versionBonus')} ×${state.versionMultiplier.toFixed(2)}`) : null,
       )
+
+      const renderKnowledge = () => {
+        if (storyError) {
+          return h('div', { className: 'dsh-pray-panelcard' },
+            h('div', { className: 'dsh-pray-cardtitle' }, t('knowledgeTitle')),
+            h('div', { className: 'dsh-pray-error' }, `${t('knowledgeError')}: ${storyError}`),
+          )
+        }
+        if (!story) {
+          return h('div', { className: 'dsh-pray-panelcard' },
+            h('div', { className: 'dsh-pray-cardtitle' }, t('knowledgeTitle')),
+            h('div', { className: 'dsh-pray-note' }, t('knowledgeLoading')),
+          )
+        }
+        const categories = story.categories || []
+        const activeCategory = categories.some((item) => item.id === knowledgeCategory) ? knowledgeCategory : (categories[0]?.id || 'dsh')
+        const entries = (story.entries || []).filter((entry) => entry.category === activeCategory)
+        const readCount = entries.filter((entry) => readIds.includes(entry.id)).length
+        const percent = entries.length ? Math.round((readCount / entries.length) * 100) : 0
+        return h(
+          React.Fragment,
+          null,
+          h('div', { className: 'dsh-pray-cardtitle' }, t('knowledgeTitle')),
+          h('div', { className: 'dsh-pray-note', style: { marginTop: 6 } }, t('knowledgeNote')),
+          h('div', { className: 'dsh-pray-knowledge-tabs' }, categories.map((category) => h(
+            'button',
+            {
+              key: category.id,
+              type: 'button',
+              className: `dsh-pray-knowledge-tab${activeCategory === category.id ? ' active' : ''}`,
+              onClick: () => { setKnowledgeCategory(category.id); setOpenEntry(null) },
+            },
+            category.title,
+          ))),
+          h('div', { className: 'dsh-pray-note', style: { marginBottom: 4 } }, categories.find((item) => item.id === activeCategory)?.description || ''),
+          h('div', { className: 'dsh-pray-progress' }, h('div', { className: 'dsh-pray-progress-fill', style: { width: `${percent}%` } })),
+          h('div', { className: 'dsh-pray-progress-label' },
+            h('span', null, localize(t, 'readProgress', { done: readCount, total: entries.length })),
+            h('span', null, `${percent}%`),
+          ),
+          h('div', { className: 'dsh-pray-list', style: { marginTop: 10 } }, entries.map((entry) => {
+            const open = openEntry === entry.id
+            const read = readIds.includes(entry.id)
+            return h(
+              'div',
+              { className: 'dsh-pray-entry', key: entry.id },
+              h(
+                'div',
+                { className: 'dsh-pray-entry-head', onClick: () => setOpenEntry(open ? null : entry.id) },
+                h('div', null,
+                  h('div', { className: 'dsh-pray-entry-title' }, entry.title),
+                  h('div', { className: 'dsh-pray-entry-summary' }, entry.summary),
+                ),
+                h('span', { className: 'dsh-pray-chip' }, open ? t('collapseEntry') : t('expandEntry')),
+              ),
+              h('div', { className: 'dsh-pray-entry-meta' },
+                ...(entry.tags || []).map((tag) => h('span', { className: 'dsh-pray-chip', key: tag }, tag)),
+                h('span', { className: 'dsh-pray-chip' }, `${t('entryStatus')}: ${entry.status}`),
+                h('span', { className: 'dsh-pray-chip' }, `${t('entryUpdated')} ${entry.updatedAt}`),
+              ),
+              open
+                ? h('div', { className: 'dsh-pray-entry-body' },
+                    h('div', { className: 'dsh-pray-note' }, entry.body),
+                    h('div', { className: 'dsh-pray-entry-use' }, `${t('termUse')}：${entry.inDsh}`),
+                    h('div', { className: 'dsh-pray-actions' },
+                      h('button', { type: 'button', className: `dsh-pray-btn${read ? '' : ' primary'}`, onClick: () => toggleRead(entry.id) }, read ? t('readDone') : t('read')),
+                    ),
+                  )
+                : null,
+            )
+          })),
+          h('div', { className: 'dsh-pray-note', style: { marginTop: 12 } }, `v${story.version} · ${t('entryUpdated')} ${story.updatedAt}`),
+        )
+      }
 
       const renderSettings = () => h(
         React.Fragment,
@@ -1484,6 +1642,7 @@ window.__ModuleLoader__.load({
           tab === 'wish' ? renderWish() : null,
           tab === 'release' ? renderRelease() : null,
           tab === 'story' ? renderStory() : null,
+          tab === 'knowledge' ? renderKnowledge() : null,
           tab === 'settings' ? renderSettings() : null,
         ),
       )

@@ -134,4 +134,8 @@ const parsed = JSON.parse(exported.body)
 console.log('export', parsed.schema, parsed.expectation, parsed.activity?.sessions, parsed.levels?.level1?.owned, parsed.urges, parsed.launches)
 if (parsed.schema !== 5) throw new Error('export failed')
 
+const story = await callJson('/dsh-pray/story')
+console.log('story', story.body.version, story.body.categories?.length, story.body.entries?.length)
+if (!story.body.entries?.length) throw new Error('story route failed')
+
 console.log('host smoke ok', home)

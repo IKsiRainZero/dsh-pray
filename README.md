@@ -4,7 +4,7 @@
 >
 > 无账号、无排行榜、无总仓库、无遥测；所有数据都在本机 `$DSH_HOME/dsh-pray/`。
 
-**v0.6.0**：没有期待硬上限了；每层有**吞吐上限**，速度会自然饱和。Level 购买倍率降到 **×1.2/10**，成本倍率提高到 1e4~1e8/10；层内注脚移到 **故事页**，不再挤在 Level 行里。右下角保持一簇**小火苗**，悬停显示简要面板。
+**v0.6.3**：升级进度条加大到 9px/12px，并用 1.15s 缓动平滑过渡。新增 **知识地图**：25 条 seed 条目，分 DSH 组件/机制与 AI 全景，可展开、标记已读、显示阅读进度；内容数据在 `game/story.js`，随学习/产出更新。
 
 ## 首先：它不想要你的注意力
 
@@ -54,9 +54,13 @@
 - 每日上限 30（回声习惯 +3/级）。
 - 长期习惯（愿力购买）：**专注习惯**（期待 +5%/级，加法）、**回声习惯**（愿力 +3%/级、上限 +3/级）、**离线习惯**（离线上限 +1h/级）。
 
-## 故事与成就
+## 故事与知识地图
 
 - **故事** 页按 Level 解锁五章，并把每层的术语注脚一起放进去。
+- **知识地图** 页分两类：
+  - **DSH 组件与机制**：Session、Turn/Step、Tool、Slot、Plugin/Bundle、Profile、Workspace、Context、Skill、Hook、Sandbox、MCP。
+  - **AI 全景**：Token、Embedding、Transformer/Attention、Context Window、Pretraining、SFT/RLHF、Inference/KV Cache、Quantization、MoE、Scaling Laws、Agent/Tool Use、RAG、Evaluation。
+  - 每条可展开，标记已读；有阅读进度条；数据在 `game/story.js`，当前是 seed 版，随学习/产出更新。
 - **成就** 是本地永久小加成（加法），例如第一次释怀、解锁 Level 3/5、10 个会话、100 轮、连续 7 天、10 次催更、3 次发版；不要求花钱。
 - **纪事** 自动记录 DeepSeek 更新日志的日期与标题；版本红利给 24h +25%。
 

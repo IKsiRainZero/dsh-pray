@@ -29,11 +29,12 @@ import {
   view,
 } from './game/engine.js'
 import { onSessionCreated, onSessionDisposed, onSessionEvent } from './game/activity.js'
+import { STORY_CATEGORIES, STORY_ENTRIES, STORY_UPDATED_AT, STORY_VERSION } from './game/story.js'
 
 export const name = 'dsh-pray'
 export const inject = ['webServer']
 
-const VERSION = '0.6.2'
+const VERSION = '0.6.3'
 const DEFAULT_CHANGELOG_URL = 'https://api-docs.deepseek.com/zh-cn/updates.md'
 const CHANGELOG_TTL_MS = 30 * 60 * 1000
 const CHANGELOG_RETRY_MS = 2 * 60 * 1000
@@ -275,6 +276,16 @@ async function handleExport(req, res, statePromise) {
   res.end(`${JSON.stringify(state, null, 2)}\n`)
 }
 
+async function handleStory(req, res) {
+  if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'GET only' })
+  return json(res, 200, {
+    version: STORY_VERSION,
+    updatedAt: STORY_UPDATED_AT,
+    categories: STORY_CATEGORIES,
+    entries: STORY_ENTRIES,
+  })
+}
+
 function registerActivity(ctx, statePromise) {
   const wrap = (fn) => (...args) => {
     statePromise.then((state) => {
@@ -307,6 +318,11 @@ export function apply(ctx) {
     kind: 'exact',
     path: '/dsh-pray/export',
     handler: handler(handleExport, statePromise),
+  }))
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: '/dsh-pray/story',
+    handler: handler(handleStory, statePromise),
   }))
 
   registerActivity(ctx, statePromise)

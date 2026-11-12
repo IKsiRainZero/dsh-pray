@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.3
+
+- Enlarge the level-up progress bar (9px card / 12px page) and smooth it with a 1.15s eased transition.
+- Add a **Knowledge map** tab: 25 seed entries across DSH components/mechanisms and the AI panorama; each entry expands, can be marked read, and has a read-progress bar.
+- Knowledge content lives in `game/story.js` and is served from `/dsh-pray/story`; version/updated date are visible.
+
 ## 0.6.2
 
 - Default card is the full bottom-right panel again (no page layout shift); `−` flame, `×` close.
