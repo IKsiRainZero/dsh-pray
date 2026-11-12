@@ -6,7 +6,7 @@
  * first-class setting: automatic purchases, card hidden by default.
  */
 
-export const VERSION = '0.6.1'
+export const VERSION = '0.6.2'
 export const SCHEMA = 5
 
 export const RELEASE_THRESHOLD = 1e12

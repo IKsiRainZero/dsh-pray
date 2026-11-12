@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.2
+
+- Default card is the full bottom-right panel again (no page layout shift); `−` flame, `×` close.
+- After closing, reopen from the sidebar page header or Settings.
+- New card-view key `v2`; old flame/hidden preference falls back to the full panel so the card is visible on every page.
+- First-run notice updated: bottom-right starts as the full card, not a flame.
+
 ## 0.6.1
 
 - Fix the flame pushing the whole DSH page up: remove the `document.body` portal and render the fixed card/flame back through `shell.overlay`.

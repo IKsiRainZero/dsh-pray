@@ -6,7 +6,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement
 
     const NS = 'dshPray'
-    const CARD_VIEW_KEY = 'dsh-pray-card-view'
+    const CARD_VIEW_KEY = 'dsh-pray-card-view-v2'
     const NOTICE_KEY = 'dsh-pray-notice-v1'
     const DICT = {
       zh: {
@@ -149,7 +149,7 @@ window.__ModuleLoader__.load({
         cardViewNote: '完整卡片、一簇小火苗，或者关闭；关闭后可在侧栏页头/设置重新打开。',
         noticeTitle: '首先',
         noticeBody: 'dsh-pray 是一个本地单机小游戏，想做的只是把「等待 DeepSeek 更新」和「你真实用 DSH 的时间」变成一点可见的积累。',
-        noticeAttention: '我们无意占据你的注意力，但它仍然可能让你想多看一眼数字——这是它的风险。所以默认的注意力保护模式会自动买 Level，并把右下角收成一簇小火苗；鼠标停留才显示简要面板，移开就消失。',
+        noticeAttention: '我们无意占据你的注意力，但它仍然可能让你想多看一眼数字——这是它的风险。默认的注意力保护模式会自动买 Level；右下角是完整卡片，可点 − 收成小火苗，或点 × 关闭，之后从侧栏页头/设置重新打开。',
         noticePrivacy: '它只读会话数、完成轮数、活跃时长这些数字，不读聊天内容；所有数据只在本机。',
         noticeChooseAttention: '用注意力保护模式',
         noticeChoosePlay: '我想手动玩',
@@ -305,7 +305,7 @@ window.__ModuleLoader__.load({
         cardViewNote: 'Full card, small flame, or closed; reopen from the sidebar header/settings.',
         noticeTitle: 'First',
         noticeBody: 'dsh-pray is a local single-player game. It only turns “waiting for a DeepSeek update” and “time you actually spend in DSH” into a small visible accumulation.',
-        noticeAttention: 'We do not intend to take your attention, but it can still make you want one more look at the numbers — that is the risk. The default attention-protection mode buys levels automatically and keeps the bottom-right as a small flame; hover to see a brief panel, move away and it disappears.',
+        noticeAttention: 'We do not intend to take your attention, but it can still make you want one more look at the numbers — that is the risk. The default attention-protection mode buys levels automatically; the bottom-right starts as the full card. Use − for the flame, × to close, and reopen from the sidebar header/settings.',
         noticePrivacy: 'It only reads session counts, completed turns, and active time, never your chats; all data stays local.',
         noticeChooseAttention: 'Use attention protection',
         noticeChoosePlay: 'I want to play manually',
@@ -555,7 +555,7 @@ window.__ModuleLoader__.load({
       try {
         const current = localStorage.getItem(CARD_VIEW_KEY)
         if (current === 'flame' || current === 'full' || current === 'hidden') return current
-        return localStorage.getItem('dsh-pray-card-visible') === '0' ? 'hidden' : 'full'
+        return 'full'
       } catch {
         return 'full'
       }
@@ -713,7 +713,7 @@ window.__ModuleLoader__.load({
           })
         } catch { /* ignore */ }
         setStoredBool(NOTICE_KEY, true)
-        setCardView(mode === 'play' ? 'full' : 'flame')
+        setCardView('full')
         setOpen(false)
       }
       if (!open) return null
