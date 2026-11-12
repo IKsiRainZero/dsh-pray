@@ -44,6 +44,7 @@ window.__ModuleLoader__.load({
         tabWish: '愿力',
         tabRelease: '释怀',
         tabStory: '故事',
+        storyLine: '故事线',
         tabKnowledge: '知识',
         tabSettings: '设置',
         nextUnlock: '下一次解锁',
@@ -214,6 +215,7 @@ window.__ModuleLoader__.load({
         tabWish: 'Wish',
         tabRelease: 'Let go',
         tabStory: 'Story',
+        storyLine: 'Storyline',
         tabKnowledge: 'Knowledge',
         tabSettings: 'Settings',
         nextUnlock: 'Next unlock',
@@ -389,11 +391,9 @@ window.__ModuleLoader__.load({
       .dsh-pray-level-line-inner { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 11px; }
       .dsh-pray-level-name { font-weight: 600; color: var(--dsw-alias-brand-primary); overflow-wrap: anywhere; }
       .dsh-pray-level-next { color: var(--dsw-alias-label-secondary); font-size: 10px; text-align: right; }
-      .dsh-pray-bar { height: 9px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 7px; }
+      .dsh-pray-bar { height: 4px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 6px; }
       .dsh-pray-bar-fill { height: 100%; border-radius: 999px;
-        background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary));
-        box-shadow: 0 0 14px color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent);
-        transition: width 1.15s cubic-bezier(.2,.8,.2,1); }
+        background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary)); transition: width .5s ease; }
       .dsh-pray-foot { display: flex; justify-content: space-between; gap: 10px; align-items: flex-end;
         margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--dsw-alias-border-l1); }
       .dsh-pray-wish { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 650; }
@@ -486,11 +486,8 @@ window.__ModuleLoader__.load({
       .dsh-pray-locked { color: var(--dsw-alias-state-warn-primary); font-size: 11px; text-align: right; }
       .dsh-pray-reset-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 700; }
       .dsh-pray-reset-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-      .dsh-pray-progress { height: 12px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 8px; }
-      .dsh-pray-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary));
-        box-shadow: 0 0 18px color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent);
-        transition: width 1.15s cubic-bezier(.2,.8,.2,1); }
-      .dsh-pray-progress-label { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--dsw-alias-label-secondary); }
+      .dsh-pray-progress { height: 6px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); overflow: hidden; margin-top: 8px; }
+      .dsh-pray-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--dsw-alias-brand-primary), var(--dsw-alias-state-warn-primary)); }
       .dsh-pray-list { display: flex; flex-direction: column; gap: 8px; }
       .dsh-pray-era { border-left: 2px solid var(--dsw-alias-brand-primary); padding: 4px 0 4px 10px; }
       .dsh-pray-era-date { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; color: var(--dsw-alias-label-secondary); }
@@ -954,7 +951,7 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function LevelRow({ level, t, notation, busy, auto, run, onOpenStory }) {
+    function LevelRow({ level, t, notation, busy, auto, run }) {
       const cost10 = Number.isFinite(level.cost10) ? formatNumber(level.cost10, notation) : '∞'
       return h(
         'div',
@@ -972,12 +969,6 @@ window.__ModuleLoader__.load({
             h('span', null, `${t('produced')} `, h('b', null, formatNumber(level.produced, notation))),
             h('span', null, `${t('multiplierShort')} `, h('b', null, `×${formatNumber(level.multiplier, notation)}`)),
             h('span', null, `${t('production')} `, h('b', null, `${formatNumber(level.production, notation)}/s`)),
-          ),
-          h(
-            'div',
-            { className: 'dsh-pray-level-term' },
-            h('span', { className: 'dsh-pray-term-badge' }, level.term || t('term')),
-            h('button', { type: 'button', className: 'dsh-pray-btn ghost', onClick: () => onOpenStory?.() }, t('openCodex')),
           ),
         ),
         h(
@@ -1103,13 +1094,12 @@ window.__ModuleLoader__.load({
         )
       }
 
-      const tabs = ['level', 'wish', 'release', 'story', 'knowledge', 'settings']
+      const tabs = ['level', 'wish', 'release', 'story', 'settings']
       const tabLabels = {
         level: t('tabLevel'),
         wish: t('tabWish'),
         release: t('tabRelease'),
         story: t('tabStory'),
-        knowledge: t('tabKnowledge'),
         settings: t('tabSettings'),
       }
       const highest = state.highestLevel
@@ -1163,6 +1153,11 @@ window.__ModuleLoader__.load({
         ),
         h(
           'div',
+          { className: 'dsh-pray-actions', style: { marginBottom: 12 } },
+          h('button', { className: 'dsh-pray-btn', onClick: () => setTab('story') }, t('storyLine')),
+        ),
+        h(
+          'div',
           { className: 'dsh-pray-grid' },
           h(StatCard, { label: t('expectation'), value: formatNumber(animated, notation), note: `${t('perSecond')} +${formatNumber(state.expectationPerSecond, notation)}`, accent: true }),
           h(StatCard, { label: t('wish'), value: formatNumber(state.wish, notation), note: `${t('today')} ${formatNumber(state.activity.todayWish, notation)}/${formatNumber(state.dailyCap, notation)}` }),
@@ -1175,10 +1170,6 @@ window.__ModuleLoader__.load({
           h('div', { className: 'dsh-pray-cardtitle' }, t('nextUnlock')),
           h('div', { className: 'dsh-pray-value small' }, next ? `L${next.index} · ${next.name} · ${formatNumber(next.at, notation)}` : t('noNextUnlock')),
           h('div', { className: 'dsh-pray-progress' }, h('div', { className: 'dsh-pray-progress-fill', style: { width: `${Math.max(2, progress)}%` } })),
-          h('div', { className: 'dsh-pray-progress-label' },
-            h('span', null, next ? `${t('nextLevel')} L${next.index} · ${next.name}` : t('noNextUnlock')),
-            h('span', null, `${progress}%`),
-          ),
           h(
             'div',
             { className: 'dsh-pray-row' },
@@ -1251,7 +1242,6 @@ window.__ModuleLoader__.load({
           busy,
           auto,
           run,
-          onOpenStory: () => setTab('knowledge'),
         }))),
         h(
           'div',
@@ -1642,7 +1632,6 @@ window.__ModuleLoader__.load({
           tab === 'wish' ? renderWish() : null,
           tab === 'release' ? renderRelease() : null,
           tab === 'story' ? renderStory() : null,
-          tab === 'knowledge' ? renderKnowledge() : null,
           tab === 'settings' ? renderSettings() : null,
         ),
       )

@@ -29,12 +29,12 @@ import {
   view,
 } from './game/engine.js'
 import { onSessionCreated, onSessionDisposed, onSessionEvent } from './game/activity.js'
-import { STORY_CATEGORIES, STORY_ENTRIES, STORY_UPDATED_AT, STORY_VERSION } from './game/story.js'
+import { STORY_CATEGORIES, STORY_ENTRIES, STORY_NOTE, STORY_STATUS, STORY_UPDATED_AT, STORY_VERSION } from './game/story.js'
 
 export const name = 'dsh-pray'
 export const inject = ['webServer']
 
-const VERSION = '0.6.3'
+const VERSION = '0.6.4'
 const DEFAULT_CHANGELOG_URL = 'https://api-docs.deepseek.com/zh-cn/updates.md'
 const CHANGELOG_TTL_MS = 30 * 60 * 1000
 const CHANGELOG_RETRY_MS = 2 * 60 * 1000
@@ -281,6 +281,8 @@ async function handleStory(req, res) {
   return json(res, 200, {
     version: STORY_VERSION,
     updatedAt: STORY_UPDATED_AT,
+    status: STORY_STATUS,
+    note: STORY_NOTE,
     categories: STORY_CATEGORIES,
     entries: STORY_ENTRIES,
   })

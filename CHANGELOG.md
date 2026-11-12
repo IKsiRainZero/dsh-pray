@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.4
+
+- Revert the level-up progress bars to the v0.6.2 sizes (4px card / 6px page, 0.5s card transition).
+- Remove per-level term chips and “read note” buttons from the Level page; keep one **Storyline** entry.
+- Withdraw the Knowledge tab and the 25 unverified seed entries from the public package; move them to workspace research.
+- Add a research plan for DSH repo/history/community and a contribution/issue/PR flow.
+
 ## 0.6.3
 
 - Enlarge the level-up progress bar (9px card / 12px page) and smooth it with a 1.15s eased transition.
