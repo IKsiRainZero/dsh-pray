@@ -1,7 +1,7 @@
 {
   "name": "dsh-pray",
-  "version": "0.3.0",
-  "description": "一个本地单机的 DSH 增量小游戏：五层 Level、愿力、Boost、Galaxy、释怀。",
+  "version": "0.4.0",
+  "description": "一个本地单机的 DSH 增量小游戏：五层 Level、愿力、催更、发版、释怀，以及注意力保护模式。",
   "type": "module",
   "main": "./index.js",
   "exports": {
@@ -19,7 +19,6 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "assets/*",
     "README.md",
     "LICENSE"
   ],
@@ -48,8 +47,8 @@
     "catalog": {
       "category": "ui",
       "summary": {
-        "en": "A local incremental game for DSH: five named levels, wish power, boosts, galaxies, and letting go.",
-        "zh": "本地单机的 DSH 增量小游戏：五层 Level、愿力、Boost、Galaxy、释怀。"
+        "en": "A local incremental game for DSH: five named levels, wish power, urges, launches, letting go, and attention protection.",
+        "zh": "本地单机的 DSH 增量小游戏：五层 Level、愿力、催更、发版、释怀，以及注意力保护模式。"
       },
       "capabilities": [
         "webServer"

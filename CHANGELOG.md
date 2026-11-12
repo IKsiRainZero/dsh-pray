@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+- Rename **Boost** → **催更** and **Galaxy** → **发版**; remove the image level and name Level 5 “我们的deepseek···会变成什么样子”.
+- Merge the overview and Level tabs into one Level page.
+- Raise 释怀 threshold to **1e12** (after Level 5 unlocks at 1e9).
+- Add **attention protection** vs **play** modes; attention mode auto-buys levels/run amplifiers but never auto-resets.
+- Add a one-time first-run notice, a fully hideable card, and a settings toggle to restore it.
+- Add achievements (permanent small multipliers) and a five-chapter story tab.
+- Level rows show lifetime output, purchase multiplier, speed, and buy controls on the right.
+- Keep the first-release celebration and add a settings preview.
+
 ## 0.3.0
 
 - Five named **Levels** replace the three abstract dimensions; all levels are always listed.

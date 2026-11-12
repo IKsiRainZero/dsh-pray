@@ -1,20 +1,20 @@
 /**
- * dsh-pray v0.3 pure game engine.
+ * dsh-pray v0.4 pure game engine.
  *
  * Five named levels form the progression. Level n produces level n-1; level 1
- * produces expectation. Boost (global reset) resets levels/run amps for a
- * multiplier; Galaxy (reset of the boost layer) resets boosts/levels for a
- * bigger multiplier; 释怀 resets the whole run for a permanent multiplier.
+ * produces expectation. 催更 (global reset) resets levels/run amps for a
+ * multiplier; 发版 (reset of the 催更 layer) resets 催更/levels for a bigger
+ * multiplier; 释怀 resets the whole run for a permanent multiplier.
  *
  * No DSH imports, no I/O: Host routes call these functions, tests call them
  * directly. Costs/production are tuned in balance.js.
  */
 import { randomUUID } from 'node:crypto'
 import {
+  ACHIEVEMENTS,
   ACTIVE_SECONDS_PER_WISH,
-  BOOST_MULTIPLIER,
   DAILY_WISH_CAP,
-  GALAXY_MULTIPLIER,
+  LAUNCH_MULTIPLIER,
   LEVELS,
   OFFLINE_CAP_PER_LEVEL_SECONDS,
   OFFLINE_CAP_SECONDS,
@@ -22,17 +22,18 @@ import {
   RELEASE_THRESHOLD,
   RUN_AMPS,
   SCHEMA,
+  URGE_MULTIPLIER,
   VERSION,
   VERSION_BONUS_MS,
   VERSION_BONUS_MULTIPLIER,
   WAITING_BONUS_MAX,
   WAITING_BONUS_PER_DAY,
-  boostCost,
-  galaxyCost,
-  galaxyRequiredBoosts,
+  launchCost,
+  launchRequiredUrges,
   levelById,
   permanentAmpById,
   runAmpById,
+  urgeCost,
 } from './balance.js'
 
 const MAX_VALUE = 1e300
@@ -78,8 +79,9 @@ export function createState(now = Date.now()) {
     release: 0,
     lastReleaseGain: 0,
     lastReleaseAt: null,
-    boosts: 0,
-    galaxies: 0,
+    urges: 0,
+    launches: 0,
+    achievements: [],
     levels: emptyLevels(),
     runAmps: Object.fromEntries(RUN_AMPS.map((def) => [def.id, 0])),
     permanentAmps: Object.fromEntries(PERMANENT_AMPS.map((def) => [def.id, 0])),
@@ -102,7 +104,7 @@ export function createState(now = Date.now()) {
     },
     eras: [],
     changelog: defaultChangelog(),
-    settings: { notation: 'auto' },
+    settings: { notation: 'auto', mode: 'attention' },
     versionBonusUntil: null,
     lastVersionBonus: null,
     lastOffline: null,
@@ -126,8 +128,9 @@ export function migrateState(raw, now = Date.now()) {
   state.release = clamp(raw.release)
   state.lastReleaseGain = clamp(raw.lastReleaseGain)
   state.lastReleaseAt = typeof raw.lastReleaseAt === 'string' ? raw.lastReleaseAt : null
-  state.boosts = Math.max(0, Math.floor(Number(raw.boosts) || 0))
-  state.galaxies = Math.max(0, Math.floor(Number(raw.galaxies) || 0))
+  state.urges = Math.max(0, Math.floor(Number(raw.urges ?? raw.boosts) || 0))
+  state.launches = Math.max(0, Math.floor(Number(raw.launches ?? raw.galaxies) || 0))
+  state.achievements = Array.isArray(raw.achievements) ? raw.achievements : []
   state.permanentAmps = { ...state.permanentAmps, ...(raw.permanentAmps || {}) }
   state.activity = { ...state.activity, ...(raw.activity || {}) }
   state.activity.days = raw.activity?.days && typeof raw.activity.days === 'object' ? raw.activity.days : {}
@@ -138,6 +141,7 @@ export function migrateState(raw, now = Date.now()) {
   state.settings = raw.settings && typeof raw.settings === 'object'
     ? { ...state.settings, ...raw.settings }
     : state.settings
+  if (state.settings.mode !== 'play') state.settings.mode = 'attention'
   state.versionBonusUntil = typeof raw.versionBonusUntil === 'string' ? raw.versionBonusUntil : null
   state.lastVersionBonus = raw.lastVersionBonus && typeof raw.lastVersionBonus === 'object'
     ? raw.lastVersionBonus
@@ -160,6 +164,19 @@ export function migrateState(raw, now = Date.now()) {
     state.runAmps.level5 = 0
     state.runAmps.global = Math.max(0, Math.floor(Number(raw.runAmps?.global) || 0))
   }
+  if (Number(raw.schema) === 3 && raw.levels) {
+    for (const def of LEVELS) {
+      const old = raw.levels[def.id] || {}
+      state.levels[def.id] = {
+        owned: clamp(old.owned),
+        bought: Math.max(0, Math.floor(Number(old.bought) || 0)),
+        produced: clamp(old.produced),
+      }
+    }
+    for (const def of RUN_AMPS) {
+      state.runAmps[def.id] = Math.max(0, Math.floor(Number(raw.runAmps?.[def.id]) || 0))
+    }
+  }
   for (const legacy of ['dimA', 'dimB', 'dimC']) delete state.runAmps[legacy]
 
   state.lastTickAt = iso(now)
@@ -180,8 +197,11 @@ export function normalizeState(raw, now = Date.now()) {
   state.release = clamp(state.release)
   state.lastReleaseGain = clamp(state.lastReleaseGain)
   state.lastReleaseAt = typeof state.lastReleaseAt === 'string' ? state.lastReleaseAt : null
-  state.boosts = Math.max(0, Math.floor(Number(state.boosts) || 0))
-  state.galaxies = Math.max(0, Math.floor(Number(state.galaxies) || 0))
+  state.urges = Math.max(0, Math.floor(Number(state.urges ?? state.boosts) || 0))
+  state.launches = Math.max(0, Math.floor(Number(state.launches ?? state.galaxies) || 0))
+  state.achievements = Array.isArray(state.achievements) ? state.achievements : []
+  delete state.boosts
+  delete state.galaxies
   state.installedAt = typeof state.installedAt === 'string' ? state.installedAt : base.installedAt
   state.lastTickAt = Number.isFinite(Date.parse(state.lastTickAt)) ? state.lastTickAt : iso(now)
   state.levels = state.levels && typeof state.levels === 'object' ? state.levels : {}
@@ -227,6 +247,7 @@ export function normalizeState(raw, now = Date.now()) {
   state.settings = state.settings && typeof state.settings === 'object'
     ? { ...base.settings, ...state.settings }
     : base.settings
+  if (state.settings.mode !== 'play') state.settings.mode = 'attention'
   state.versionBonusUntil = typeof state.versionBonusUntil === 'string' ? state.versionBonusUntil : null
   state.lastVersionBonus = state.lastVersionBonus && typeof state.lastVersionBonus === 'object'
     ? state.lastVersionBonus
@@ -257,12 +278,32 @@ export function offlineCapSeconds(state) {
   return Math.min(MAX_OFFLINE_SECONDS, cap)
 }
 
+export function achievementMultiplier(state) {
+  const unlocked = new Set(state.achievements || [])
+  return 1 + ACHIEVEMENTS.reduce((sum, def) => sum + (unlocked.has(def.id) ? def.reward : 0), 0)
+}
+
+export function checkAchievements(state) {
+  const unlocked = new Set(state.achievements || [])
+  const added = []
+  for (const def of ACHIEVEMENTS) {
+    if (unlocked.has(def.id)) continue
+    if (def.check(state)) {
+      unlocked.add(def.id)
+      added.push(def.id)
+    }
+  }
+  state.achievements = [...unlocked]
+  return added
+}
+
 export function globalMultiplier(state, now = Date.now()) {
   return (1 + 0.25 * (state.runAmps.global || 0)) *
     (1 + 0.1 * (state.permanentAmps.focus || 0)) *
     (1 + 0.1 * state.release) *
-    Math.pow(BOOST_MULTIPLIER, state.boosts || 0) *
-    Math.pow(GALAXY_MULTIPLIER, state.galaxies || 0) *
+    Math.pow(URGE_MULTIPLIER, state.urges || 0) *
+    Math.pow(LAUNCH_MULTIPLIER, state.launches || 0) *
+    achievementMultiplier(state) *
     versionMultiplier(state, now)
 }
 
@@ -326,6 +367,7 @@ export function advance(state, now = Date.now()) {
         at: iso(now),
       }
     : null
+  checkAchievements(state)
   return state.lastOffline
 }
 
@@ -404,25 +446,60 @@ export function buyPermanentAmp(state, id) {
   return { ok: true, level: state.permanentAmps[id], total: cost }
 }
 
-export function currentBoostCost(state) {
-  return boostCost(state.boosts || 0)
+/**
+ * Attention-protection mode: buy levels and run amplifiers automatically,
+ * but never perform a reset (催更 / 发版 / 释怀) on its own. Those remain
+ * deliberate checkpoints.
+ */
+export function applyAuto(state, passes = 3) {
+  if (state.settings?.mode !== 'attention') return 0
+  let actions = 0
+  for (let pass = 0; pass < passes; pass += 1) {
+    let changed = false
+    for (const def of LEVELS) {
+      if (state.lifetimeExpectation < def.unlockAt) continue
+      const plan10 = levelCost(state, def.id, 10)
+      if (plan10?.affordable && plan10.purchased === 10) {
+        const result = buyLevel(state, def.id, 10)
+        if (result.ok) { actions += 1; changed = true; continue }
+      }
+      const plan1 = levelCost(state, def.id, 1)
+      if (plan1?.affordable) {
+        const result = buyLevel(state, def.id, 1)
+        if (result.ok) { actions += 1; changed = true }
+      }
+    }
+    for (const def of RUN_AMPS) {
+      const cost = runAmpCost(state, def)
+      if (state.expectation >= cost) {
+        const result = buyRunAmp(state, def.id)
+        if (result.ok) { actions += 1; changed = true }
+      }
+    }
+    if (!changed) break
+  }
+  return actions
 }
 
-export function currentGalaxyCost(state) {
-  return galaxyCost(state.galaxies || 0)
+export function currentUrgeCost(state) {
+  return urgeCost(state.urges || 0)
 }
 
-export function currentGalaxyRequired(state) {
-  return galaxyRequiredBoosts(state.galaxies || 0)
+export function currentLaunchCost(state) {
+  return launchCost(state.launches || 0)
 }
 
-export function canBoost(state) {
-  return state.expectation >= currentBoostCost(state)
+export function currentLaunchRequired(state) {
+  return launchRequiredUrges(state.launches || 0)
 }
 
-export function canGalaxy(state) {
-  return (state.boosts || 0) >= currentGalaxyRequired(state) &&
-    state.expectation >= currentGalaxyCost(state)
+export function canUrge(state) {
+  return state.expectation >= currentUrgeCost(state)
+}
+
+export function canLaunch(state) {
+  return (state.urges || 0) >= currentLaunchRequired(state) &&
+    state.expectation >= currentLaunchCost(state)
 }
 
 function resetLevelsAndAmps(state) {
@@ -433,29 +510,31 @@ function resetLevelsAndAmps(state) {
   for (const def of RUN_AMPS) state.runAmps[def.id] = 0
 }
 
-export function boost(state) {
-  const cost = currentBoostCost(state)
-  if (state.expectation < cost) return { ok: false, error: '期待不足，无法 Boost' }
+export function urge(state) {
+  const cost = currentUrgeCost(state)
+  if (state.expectation < cost) return { ok: false, error: '期待不足，无法催更' }
   state.expectation = 0
-  state.boosts = (state.boosts || 0) + 1
+  state.urges = (state.urges || 0) + 1
   resetLevelsAndAmps(state)
   state.lastOffline = null
-  return { ok: true, cost, boosts: state.boosts }
+  checkAchievements(state)
+  return { ok: true, cost, urges: state.urges }
 }
 
-export function galaxy(state) {
-  const required = currentGalaxyRequired(state)
-  const cost = currentGalaxyCost(state)
-  if ((state.boosts || 0) < required) {
-    return { ok: false, error: `需要 ${required} 次 Boost 才能 Galaxy` }
+export function launch(state) {
+  const required = currentLaunchRequired(state)
+  const cost = currentLaunchCost(state)
+  if ((state.urges || 0) < required) {
+    return { ok: false, error: `需要 ${required} 次催更才能发版` }
   }
-  if (state.expectation < cost) return { ok: false, error: '期待不足，无法 Galaxy' }
+  if (state.expectation < cost) return { ok: false, error: '期待不足，无法发版' }
   state.expectation = 0
-  state.galaxies = (state.galaxies || 0) + 1
-  state.boosts = 0
+  state.launches = (state.launches || 0) + 1
+  state.urges = 0
   resetLevelsAndAmps(state)
   state.lastOffline = null
-  return { ok: true, cost, required, galaxies: state.galaxies }
+  checkAchievements(state)
+  return { ok: true, cost, required, launches: state.launches }
 }
 
 export function releaseGain(state) {
@@ -473,10 +552,11 @@ export function release(state, now = Date.now()) {
   state.lastReleaseAt = iso(now)
   state.expectation = 0
   state.runExpectation = 0
-  state.boosts = 0
-  state.galaxies = 0
+  state.urges = 0
+  state.launches = 0
   resetLevelsAndAmps(state)
   state.lastOffline = null
+  checkAchievements(state)
   return { ok: true, gain, release: state.release }
 }
 
@@ -572,31 +652,38 @@ export function view(state, now = Date.now()) {
     highestLevel: {
       index: highest.index,
       name: highest.name,
-      image: highest.image || null,
     },
     nextLevel: next
       ? {
           index: next.index,
           name: next.name,
-          image: next.image || null,
           at: next.unlockAt,
           progress: nextProgress,
         }
       : null,
-    boosts: state.boosts || 0,
-    galaxies: state.galaxies || 0,
-    boostCost: currentBoostCost(state),
-    galaxyCost: currentGalaxyCost(state),
-    galaxyRequiredBoosts: currentGalaxyRequired(state),
-    canBoost: canBoost(state),
-    canGalaxy: canGalaxy(state),
-    boostMultiplier: Math.pow(BOOST_MULTIPLIER, state.boosts || 0),
-    galaxyMultiplier: Math.pow(GALAXY_MULTIPLIER, state.galaxies || 0),
+    urges: state.urges || 0,
+    launches: state.launches || 0,
+    urgeCost: currentUrgeCost(state),
+    launchCost: currentLaunchCost(state),
+    launchRequiredUrges: currentLaunchRequired(state),
+    canUrge: canUrge(state),
+    canLaunch: canLaunch(state),
+    urgeMultiplier: Math.pow(URGE_MULTIPLIER, state.urges || 0),
+    launchMultiplier: Math.pow(LAUNCH_MULTIPLIER, state.launches || 0),
     runAmps,
     permanentAmps,
+    achievements: ACHIEVEMENTS.map((def) => ({
+      id: def.id,
+      name: def.name,
+      desc: def.desc,
+      reward: def.reward,
+      unlocked: (state.achievements || []).includes(def.id),
+    })),
+    achievementMultiplier: achievementMultiplier(state),
+    mode: state.settings?.mode || 'attention',
     nextUnlock: next
       ? { kind: 'level', index: next.index, name: next.name, at: next.unlockAt }
-      : { kind: 'boost', name: 'Boost', at: currentBoostCost(state) },
+      : { kind: 'urge', name: '催更', at: currentUrgeCost(state) },
     canRelease: state.runExpectation >= RELEASE_THRESHOLD,
     releaseGain: releaseGain(state),
     releaseThreshold: RELEASE_THRESHOLD,

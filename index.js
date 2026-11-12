@@ -1,28 +1,28 @@
 /**
- * dsh-pray v0.2 — Host half.
+ * dsh-pray v0.4 — Host half.
  *
  * Local single-player incremental game. It owns:
  *   - the changelog fetch/cache (the only network request),
- *   - the game state and its migration from v0.1,
+ *   - the game state and its migrations,
  *   - core DSH event collection (sessions / turns / active time),
- *   - the three HTTP routes used by the browser half.
+ *   - the HTTP routes used by the browser half.
  *
  * There is no total repository, no push tool, and no telemetry.
  */
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { homedir } from 'node:os'
-import { fileURLToPath } from 'node:url'
 import {
-  boost,
+  applyAuto,
+  checkAchievements,
+  launch,
+  urge,
   buyLevel,
   buyPermanentAmp,
   buyRunAmp,
   createState,
   advance,
-  galaxy,
   migrateState,
-  normalizeState,
   release,
   syncEra,
   view,
@@ -32,7 +32,7 @@ import { onSessionCreated, onSessionDisposed, onSessionEvent } from './game/acti
 export const name = 'dsh-pray'
 export const inject = ['webServer']
 
-const VERSION = '0.3.0'
+const VERSION = '0.4.0'
 const DEFAULT_CHANGELOG_URL = 'https://api-docs.deepseek.com/zh-cn/updates.md'
 const CHANGELOG_TTL_MS = 30 * 60 * 1000
 const CHANGELOG_RETRY_MS = 2 * 60 * 1000
@@ -69,7 +69,7 @@ async function loadState() {
     await writeJson(stateFile(), state)
     return state
   }
-  const state = Number(raw.schema) >= 2 ? normalizeState(raw) : migrateState(raw)
+  const state = migrateState(raw)
   await writeJson(stateFile(), state)
   return state
 }
@@ -207,6 +207,8 @@ async function handleState(req, res, statePromise) {
   const state = await statePromise
   await refreshChangelog(state, false)
   advance(state, Date.now())
+  if (state.settings?.mode === 'attention') applyAuto(state)
+  checkAchievements(state)
   syncEra(state, Date.now())
   schedulePersist(state)
   return json(res, 200, view(state, Date.now()))
@@ -231,12 +233,20 @@ async function handleAction(req, res, statePromise) {
     result = buyRunAmp(state, payload.id)
   } else if (type === 'buyPermanentAmp') {
     result = buyPermanentAmp(state, payload.id)
-  } else if (type === 'boost') {
-    result = boost(state)
-  } else if (type === 'galaxy') {
-    result = galaxy(state)
+  } else if (type === 'urge') {
+    result = urge(state)
+  } else if (type === 'launch') {
+    result = launch(state)
   } else if (type === 'release') {
     result = release(state, Date.now())
+  } else if (type === 'setMode') {
+    const mode = String(payload.mode || '')
+    if (mode !== 'attention' && mode !== 'play') {
+      result = { ok: false, error: '未知模式' }
+    } else {
+      state.settings.mode = mode
+      result = { ok: true, mode }
+    }
   } else if (type === 'setNotation') {
     const notation = String(payload.notation || '')
     if (!ALLOWED_NOTATIONS.has(notation)) {
@@ -247,6 +257,8 @@ async function handleAction(req, res, statePromise) {
     }
   }
   if (!result.ok) return actionError(res, result.error)
+  if (state.settings?.mode === 'attention') applyAuto(state)
+  checkAchievements(state)
   await schedulePersist(state, true)
   return json(res, 200, { ok: true, result, state: view(state, Date.now()) })
 }
@@ -260,39 +272,11 @@ async function handleExport(req, res, statePromise) {
   res.end(`${JSON.stringify(state, null, 2)}\n`)
 }
 
-async function handleAsset(req, res) {
-  if (req.method !== 'GET') {
-    res.statusCode = 405
-    res.end('GET only')
-    return
-  }
-  const base = fileURLToPath(new URL('./assets/', import.meta.url))
-  for (const [name, type] of [
-    ['realm-5.png', 'image/png'],
-    ['realm-5.jpg', 'image/jpeg'],
-    ['realm-5.jpeg', 'image/jpeg'],
-    ['realm-5.webp', 'image/webp'],
-    ['realm-5.svg', 'image/svg+xml'],
-  ]) {
-    try {
-      const data = await readFile(join(base, name))
-      res.statusCode = 200
-      res.setHeader('content-type', type)
-      res.setHeader('cache-control', 'no-store')
-      res.end(data)
-      return
-    } catch {
-      // Try the next fallback.
-    }
-  }
-  res.statusCode = 404
-  res.end('not found')
-}
-
 function registerActivity(ctx, statePromise) {
   const wrap = (fn) => (...args) => {
     statePromise.then((state) => {
       fn(state, ...args)
+      checkAchievements(state)
       schedulePersist(state)
     }).catch(() => {})
   }
@@ -320,11 +304,6 @@ export function apply(ctx) {
     kind: 'exact',
     path: '/dsh-pray/export',
     handler: handler(handleExport, statePromise),
-  }))
-  ctx.effect(() => ctx.webServer.register({
-    kind: 'exact',
-    path: '/dsh-pray/asset/realm-5',
-    handler: handler(handleAsset, statePromise),
   }))
 
   registerActivity(ctx, statePromise)

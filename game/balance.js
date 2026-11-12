@@ -1,16 +1,15 @@
 /**
- * dsh-pray v0.3 balance sheet.
+ * dsh-pray v0.4 balance sheet.
  *
- * Pure data only. Tune here, never inside the UI.
- * Five named levels replace the old three abstract dimensions; the level names
- * are the progression itself. Costs are in 期待 for levels / run amplifiers,
- * in 愿力 for permanent amplifiers.
+ * Five named levels, 催更 / 发版 reset layers, 释怀 prestige.
+ * The Level 5 name is a phrase, not an image. Attention protection is a
+ * first-class setting: automatic purchases, card hidden by default.
  */
 
-export const VERSION = '0.3.0'
-export const SCHEMA = 3
+export const VERSION = '0.4.0'
+export const SCHEMA = 4
 
-export const RELEASE_THRESHOLD = 1e6
+export const RELEASE_THRESHOLD = 1e12
 export const DAILY_WISH_CAP = 30
 export const ACTIVE_SECONDS_PER_WISH = 600
 export const OFFLINE_CAP_SECONDS = 8 * 3600
@@ -20,18 +19,14 @@ export const WAITING_BONUS_MAX = 1
 export const VERSION_BONUS_MULTIPLIER = 1.5
 export const VERSION_BONUS_MS = 24 * 3600 * 1000
 
-export const BOOST_COST_BASE = 1e4
-export const BOOST_COST_GROWTH = 100
-export const BOOST_MULTIPLIER = 1.5
-export const GALAXY_COST_BASE = 1e6
-export const GALAXY_COST_GROWTH = 100
-export const GALAXY_REQUIRED_BOOSTS = 3
-export const GALAXY_MULTIPLIER = 2
+export const URGE_COST_BASE = 1e4
+export const URGE_COST_GROWTH = 100
+export const URGE_MULTIPLIER = 1.5
+export const LAUNCH_COST_BASE = 1e6
+export const LAUNCH_COST_GROWTH = 100
+export const LAUNCH_REQUIRED_URGES = 3
+export const LAUNCH_MULTIPLIER = 2
 
-/**
- * Five levels. The first four are the user's names; the fifth is an image.
- * Level n produces level n-1; level 1 produces 期待.
- */
 export const LEVELS = [
   {
     id: 'level1',
@@ -76,8 +71,7 @@ export const LEVELS = [
   {
     id: 'level5',
     index: 5,
-    name: 'Level 5',
-    image: 'assets/realm-5.jpg',
+    name: '我们的deepseek···会变成什么样子',
     baseCost: 1e7,
     costGrowth: 1e6,
     baseProduction: 1,
@@ -86,7 +80,6 @@ export const LEVELS = [
   },
 ]
 
-/** Run amplifiers: bought with 期待, reset by Boost / Galaxy / 释怀. */
 export const RUN_AMPS = [
   { id: 'level1', name: 'Level 1 增幅器', effect: 'Level 1 产出 +50%/级', baseCost: 1e3, growth: 10 },
   { id: 'level2', name: 'Level 2 增幅器', effect: 'Level 2 产出 +50%/级', baseCost: 5e3, growth: 10 },
@@ -96,11 +89,25 @@ export const RUN_AMPS = [
   { id: 'global', name: '全局增幅器', effect: '所有产出 +25%/级', baseCost: 1e4, growth: 10 },
 ]
 
-/** Permanent amplifiers: bought with 愿力, never reset. */
 export const PERMANENT_AMPS = [
   { id: 'focus', name: '专注', effect: '期待产出 +10%/级', baseCost: 5, growth: 1.8 },
   { id: 'echo', name: '回声', effect: '愿力获取 +5%/级，每日上限 +5/级', baseCost: 8, growth: 1.8 },
   { id: 'offline', name: '挂机', effect: '离线上限 +2 小时/级', baseCost: 6, growth: 1.8 },
+]
+
+/**
+ * Achievements are checked in the engine. Each one is a small permanent
+ * multiplier, so they survive 释怀; none of them require spending money.
+ */
+export const ACHIEVEMENTS = [
+  { id: 'first_release', name: '第一次释怀', desc: '完成一次释怀', reward: 0.02, check: (s) => s.release >= 1 },
+  { id: 'level3', name: '憋气季军', desc: '解锁 Level 3', reward: 0.02, check: (s) => s.lifetimeExpectation >= 1e5 },
+  { id: 'level5', name: '看到最后', desc: '解锁 Level 5', reward: 0.05, check: (s) => s.lifetimeExpectation >= 1e9 },
+  { id: 'sessions10', name: '十次开张', desc: '累计开 10 个会话', reward: 0.02, check: (s) => s.activity.sessions >= 10 },
+  { id: 'turns100', name: '一百轮', desc: '完成 100 轮对话', reward: 0.02, check: (s) => s.activity.turns >= 100 },
+  { id: 'streak7', name: '七天', desc: '连续活跃 7 天', reward: 0.02, check: (s) => s.activity.streak >= 7 },
+  { id: 'urge10', name: '催更十次', desc: '累计催更 10 次', reward: 0.02, check: (s) => s.urges >= 10 },
+  { id: 'launch3', name: '三次发版', desc: '累计发版 3 次', reward: 0.03, check: (s) => s.launches >= 3 },
 ]
 
 export function levelById(id) {
@@ -115,14 +122,18 @@ export function permanentAmpById(id) {
   return PERMANENT_AMPS.find((item) => item.id === id)
 }
 
-export function boostCost(boosts) {
-  return BOOST_COST_BASE * Math.pow(BOOST_COST_GROWTH, Math.max(0, boosts))
+export function achievementById(id) {
+  return ACHIEVEMENTS.find((item) => item.id === id)
 }
 
-export function galaxyCost(galaxies) {
-  return GALAXY_COST_BASE * Math.pow(GALAXY_COST_GROWTH, Math.max(0, galaxies))
+export function urgeCost(urges) {
+  return URGE_COST_BASE * Math.pow(URGE_COST_GROWTH, Math.max(0, urges))
 }
 
-export function galaxyRequiredBoosts(galaxies) {
-  return GALAXY_REQUIRED_BOOSTS + Math.max(0, galaxies)
+export function launchCost(launches) {
+  return LAUNCH_COST_BASE * Math.pow(LAUNCH_COST_GROWTH, Math.max(0, launches))
+}
+
+export function launchRequiredUrges(launches) {
+  return LAUNCH_REQUIRED_URGES + Math.max(0, launches)
 }
