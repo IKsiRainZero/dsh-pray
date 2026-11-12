@@ -261,7 +261,13 @@ async function handleAsset(req, res) {
     return
   }
   const base = fileURLToPath(new URL('./assets/', import.meta.url))
-  for (const [name, type] of [['realm-5.png', 'image/png'], ['realm-5.svg', 'image/svg+xml']]) {
+  for (const [name, type] of [
+    ['realm-5.png', 'image/png'],
+    ['realm-5.jpg', 'image/jpeg'],
+    ['realm-5.jpeg', 'image/jpeg'],
+    ['realm-5.webp', 'image/webp'],
+    ['realm-5.svg', 'image/svg+xml'],
+  ]) {
     try {
       const data = await readFile(join(base, name))
       res.statusCode = 200

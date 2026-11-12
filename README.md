@@ -32,7 +32,7 @@
 | 4 | Pro来✋🏻😡🤚🏻 | 10,000,000 |
 | 5 | （用户提供图片） | 1,000,000,000 |
 
-**境界 5 的图片**：把截图放到 `plugin/assets/realm-5.png`。没有图片时会显示 `assets/realm-5.svg` 占位；路由优先读 PNG，其次 SVG。图片由你提供，请确认你有权分享它。
+**境界 5 的图片**：把截图放到 `plugin/assets/realm-5.png`（也支持 `.jpg` / `.jpeg` / `.webp`）。没有图片时会显示 `assets/realm-5.svg` 占位；路由优先读图片，其次 SVG。图片由你提供，请确认你有权分享它。
 
 ## 安装
 
@@ -48,9 +48,10 @@
 
 仓库：<https://github.com/IKsiRainZero/dsh-pray>
 
-\sh
+```sh
 dsh plugin --profile <profile> add github:IKsiRainZero/dsh-pray
-\\n
+```
+
 这条命令拉的是仓库源码；本插件没有构建脚本，装完重启 profile 即可。
 
 ### 发布后（npm）
