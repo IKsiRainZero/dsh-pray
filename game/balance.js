@@ -6,10 +6,12 @@
  * first-class setting: automatic purchases, card hidden by default.
  */
 
-export const VERSION = '0.4.1'
-export const SCHEMA = 4
+export const VERSION = '0.5.0'
+export const SCHEMA = 5
 
 export const RELEASE_THRESHOLD = 1e12
+export const EXPECTATION_CAP = 1e12
+export const LEVEL_PURCHASE_MULTIPLIER = 1.5
 export const DAILY_WISH_CAP = 30
 export const ACTIVE_SECONDS_PER_WISH = 600
 export const OFFLINE_CAP_SECONDS = 8 * 3600
@@ -37,6 +39,10 @@ export const LEVELS = [
     baseProduction: 1,
     unlockAt: 0,
     description: '直接产出期待。',
+    term: 'SemVer 语义化版本',
+    termText: '版本号 MAJOR.MINOR.PATCH；-rc.N 是候选版，不是正式版。',
+    termUse: '看到 0.2.1-rc.3，知道它是 0.2.1 的第 3 个候选版；升级前先看 breaking change。',
+    story: '你第一次打开它。更新日志停在 2026-10-17，等待开始有了形状。',
   },
   {
     id: 'level2',
@@ -47,6 +53,10 @@ export const LEVELS = [
     baseProduction: 1,
     unlockAt: 1e3,
     description: '产出 Level 1。',
+    term: 'AGI 与 MoE',
+    termText: 'AGI 是通用人工智能；MoE（混合专家）用多个专家网络分摊计算，是工程路线，不等于 AGI 已实现。',
+    termUse: '听到“梁叔叔搞 AGI”时，先问：是模型能力、产品形态，还是工程架构？',
+    story: '你开始认真等。听说梁叔叔在搞 AGI，你决定不催，只把期待攒起来。',
   },
   {
     id: 'level3',
@@ -57,6 +67,10 @@ export const LEVELS = [
     baseProduction: 1,
     unlockAt: 1e5,
     description: '产出 Level 2。',
+    term: '延迟与吞吐',
+    termText: '延迟是单个请求等多久；吞吐是单位时间能处理多少请求。两者经常互相拉扯。',
+    termUse: '“憋气”像延迟；真正难的是长尾延迟和稳定性，不是平均值。',
+    story: 'DeepSeek 迟迟不出声，群里开始比谁憋得久。你发现等待也能变成一种战绩。',
   },
   {
     id: 'level4',
@@ -67,6 +81,10 @@ export const LEVELS = [
     baseProduction: 1,
     unlockAt: 1e7,
     description: '产出 Level 3。',
+    term: '训练与推理',
+    termText: '训练是学参数，推理是用参数；模型服务的日常成本主要在推理。',
+    termUse: '看到 Pro/Flash 时，先分清是训练能力、推理价格，还是产品入口。',
+    story: 'Pro 来了。你拍桌，但桌子是本地 JSON，没人受伤。',
   },
   {
     id: 'level5',
@@ -77,22 +95,17 @@ export const LEVELS = [
     baseProduction: 1,
     unlockAt: 1e9,
     description: '产出 Level 4。',
+    term: '缩放定律与涌现',
+    termText: '缩放定律是 loss 随参数/数据/算力变化的经验规律；涌现指能力突然出现，但定义和可复现性有争议。',
+    termUse: '别把“更大”直接等同于“更可靠”；看任务评测和失败模式。',
+    story: '你攒到最后一层。更新还没来，但你已经开始想象它来的时候。',
   },
 ]
 
-export const RUN_AMPS = [
-  { id: 'level1', name: 'Level 1 增幅器', effect: 'Level 1 产出 +50%/级', baseCost: 1e3, growth: 10 },
-  { id: 'level2', name: 'Level 2 增幅器', effect: 'Level 2 产出 +50%/级', baseCost: 5e3, growth: 10 },
-  { id: 'level3', name: 'Level 3 增幅器', effect: 'Level 3 产出 +50%/级', baseCost: 5e4, growth: 10 },
-  { id: 'level4', name: 'Level 4 增幅器', effect: 'Level 4 产出 +50%/级', baseCost: 5e5, growth: 10 },
-  { id: 'level5', name: 'Level 5 增幅器', effect: 'Level 5 产出 +50%/级', baseCost: 5e6, growth: 10 },
-  { id: 'global', name: '全局增幅器', effect: '所有产出 +25%/级', baseCost: 1e4, growth: 10 },
-]
-
 export const PERMANENT_AMPS = [
-  { id: 'focus', name: '专注', effect: '期待产出 +10%/级', baseCost: 5, growth: 1.8 },
-  { id: 'echo', name: '回声', effect: '愿力获取 +5%/级，每日上限 +5/级', baseCost: 8, growth: 1.8 },
-  { id: 'offline', name: '挂机', effect: '离线上限 +2 小时/级', baseCost: 6, growth: 1.8 },
+  { id: 'focus', name: '专注习惯', effect: '永久：期待产出 +5%/级（加法）', baseCost: 5, growth: 1.8 },
+  { id: 'echo', name: '回声习惯', effect: '永久：愿力获取 +3%/级，每日上限 +3/级', baseCost: 8, growth: 1.8 },
+  { id: 'offline', name: '离线习惯', effect: '永久：离线上限 +1 小时/级', baseCost: 6, growth: 1.8 },
 ]
 
 /**
@@ -112,10 +125,6 @@ export const ACHIEVEMENTS = [
 
 export function levelById(id) {
   return LEVELS.find((item) => item.id === id)
-}
-
-export function runAmpById(id) {
-  return RUN_AMPS.find((item) => item.id === id)
 }
 
 export function permanentAmpById(id) {

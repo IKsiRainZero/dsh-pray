@@ -51,11 +51,11 @@ const old = migrateState({
   galaxies: 2,
   changelog: { date: '2026-10-17', headings: ['x'], ok: true },
 })
-assert.equal(old.schema, 4)
+assert.equal(old.schema, 5)
 assert.equal(old.levels.level1.owned, 3)
-assert.equal(old.runAmps.level1, 1)
 assert.equal(old.urges, 4)
 assert.equal(old.launches, 2)
+assert.equal(old.runAmps, undefined)
 assert.equal(view(old, now).highestLevel.name, '别打扰梁叔叔搞AGI')
 
 const urged = createState(now)
@@ -90,7 +90,6 @@ releaseState.runExpectation = 4e12
 releaseState.urges = 5
 releaseState.launches = 2
 releaseState.levels.level1 = { owned: 10, bought: 10, produced: 123 }
-releaseState.runAmps.global = 3
 assert.equal(releaseGain(releaseState), 2)
 const released = release(releaseState, now)
 assert.equal(released.ok, true)
@@ -100,7 +99,6 @@ assert.equal(releaseState.urges, 0)
 assert.equal(releaseState.launches, 0)
 assert.equal(releaseState.levels.level1.owned, 0)
 assert.equal(releaseState.levels.level1.produced, 123)
-assert.equal(releaseState.runAmps.global, 0)
 assert.ok(releaseState.achievements.includes('first_release'))
 
 const achievementState = createState(now)
@@ -174,7 +172,7 @@ assert.equal(syncEra(eraState, now), true)
 assert.ok(eraState.versionBonusUntil)
 
 const v = view(state, now)
-assert.equal(v.schema, 4)
+assert.equal(v.schema, 5)
 assert.equal(v.levels.length, 5)
 assert.equal(v.levels[4].name, '我们的deepseek···会变成什么样子')
 assert.equal(v.urgeCost, 1e4)

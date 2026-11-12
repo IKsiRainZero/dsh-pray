@@ -95,7 +95,7 @@ console.log('state1', JSON.stringify({
   latest: state1.body.latestUpdate,
   changelogOk: state1.body.changelogOk,
 }, null, 2))
-if (state1.body.schema !== 4) throw new Error('v4 schema expected')
+if (state1.body.schema !== 5) throw new Error('v5 schema expected')
 if (state1.body.lifetimeExpectation < 1280) throw new Error('migration lost points')
 if (state1.body.levels.length !== 5) throw new Error('five levels expected')
 if (state1.body.urges !== 2 || state1.body.launches !== 1) throw new Error('urge/launch migration failed')
@@ -132,6 +132,6 @@ if (state2.body.activity.turns < 1) throw new Error('turn not counted')
 const exported = await call('/dsh-pray/export')
 const parsed = JSON.parse(exported.body)
 console.log('export', parsed.schema, parsed.expectation, parsed.activity?.sessions, parsed.levels?.level1?.owned, parsed.urges, parsed.launches)
-if (parsed.schema !== 4) throw new Error('export failed')
+if (parsed.schema !== 5) throw new Error('export failed')
 
 console.log('host smoke ok', home)

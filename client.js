@@ -6,14 +6,14 @@ window.__ModuleLoader__.load({
     const h = React.createElement
 
     const NS = 'dshPray'
-    const CARD_KEY = 'dsh-pray-card-visible'
+    const CARD_VIEW_KEY = 'dsh-pray-card-view'
     const NOTICE_KEY = 'dsh-pray-notice-v1'
     const DICT = {
       zh: {
         title: 'dsh-pray · 期待',
         panelLabel: '期待',
         kicker: '本地单机 · 注意力保护',
-        collapse: '收起成小胶囊',
+        collapse: '收成小火苗',
         hide: '隐藏卡片（侧栏可恢复）',
         expand: '展开',
         since: '距 DeepSeek 上次更新',
@@ -65,12 +65,20 @@ window.__ModuleLoader__.load({
         max: 'MAX',
         locked: '累计期待 {at} 解锁',
         notEnough: '不够',
-        runAmps: '本轮增幅器',
-        permanentAmps: '永久增幅器',
+        habits: '长期习惯',
+        term: '层内注脚',
+        openCodex: '读注脚',
+        closeCodex: '收起注脚',
+        termUse: '怎么用',
+        softcap: '期待上限',
+        softcapNote: '本轮期待上限是 1e12；到达后停止增长，等你释怀或重开本轮。',
+        permanentBonus: '永久加成',
+        temporaryBonus: '临时加成',
+        totalMultiplier: '总倍率',
         urge: '催更',
         launch: '发版',
-        urgeDesc: '全局重置：清空所有 Level 和本轮增幅器，换 ×1.5 全局倍率/次。',
-        launchDesc: '重置催更：清空催更、所有 Level 和本轮增幅器，换 ×2 全局倍率/次。',
+        urgeDesc: '全局重置：清空所有 Level，换每层 +2% 永久加法加成（发版时清空催更层）。',
+        launchDesc: '重置催更：清空催更和所有 Level，换每层 +5% 永久加法加成。',
         urges: '催更次数',
         launches: '发版次数',
         urgeCost: '催更成本',
@@ -78,7 +86,7 @@ window.__ModuleLoader__.load({
         launchRequires: '需要 {n} 次催更',
         urgeButton: '催更（重置 Level）',
         launchButton: '发版（重置催更）',
-        resetWarning: '再点一次确认：这会清空本轮的 Level 和增幅器。',
+        resetWarning: '再点一次确认：这会清空本轮的 Level。',
         confirm: '确认',
         cancel: '取消',
         urgeDone: '催更完成，获得 ×1.5 全局倍率。',
@@ -88,13 +96,13 @@ window.__ModuleLoader__.load({
         releaseGain: '预计获得',
         releaseThreshold: '门槛',
         releaseButton: '释怀这一轮',
-        releaseConfirm: '再点一次确认：期待、Level、催更、发版、本轮增幅器会重置；愿力、释怀、档案保留。',
+        releaseConfirm: '再点一次确认：期待、Level、催更、发版会重置；愿力、释怀、档案保留。',
         releaseCancel: '取消',
         releaseBalance: '释怀',
         releaseMultiplier: '永久倍率',
         cannotRelease: '本轮累计期待还不够',
         releaseDone: '已释怀，获得 {n} 点释怀。',
-        releaseCostNote: '释怀会重置期待、Level、催更、发版和本轮增幅器；愿力不重置。',
+        releaseCostNote: '释怀会重置期待、Level、催更和发版；愿力不重置。',
         eras: '纪事',
         erasEmpty: '还没有记录到版本更新。',
         privacyTitle: '隐私',
@@ -117,12 +125,12 @@ window.__ModuleLoader__.load({
         mode: '模式',
         modeAttention: '注意力保护',
         modePlay: '游玩模式',
-        modeAttentionDesc: '自动买 Level 和本轮增幅器；不自动催更/发版/释怀，到可释怀时会暂停购买。卡片默认隐藏，想看时从侧栏打开。',
+        modeAttentionDesc: '自动买 Level；不自动催更/发版/释怀，到可释怀时会暂停购买。右下角只留一簇小火苗，鼠标停留才展开简要面板。',
         modePlayDesc: '手动购买；适合想认真玩一会儿的时候。',
         autoBuying: '自动购买中 · 不自动重置',
         autoPaused: '自动购买已暂停：本轮已可释怀，先把决定留给你。',
         resetRun: '重开本轮',
-        resetRunNote: '保留愿力、释怀、成就、档案；清空本轮期待、Level、催更/发版、增幅器。',
+        resetRunNote: '保留愿力、释怀、成就、档案；清空本轮期待、Level、催更/发版。',
         resetRunConfirm: '再点一次确认：本轮进度会清空，愿力/释怀/成就保留。',
         resetRunDone: '本轮已重开。',
         repairState: '修复存档',
@@ -133,12 +141,14 @@ window.__ModuleLoader__.load({
         anomalyDesc: '检测到本轮数值已经失衡（旧版自动购买跑飞）。建议重开本轮；愿力、释怀、成就保留。',
         switchToPlay: '切到游玩模式',
         switchToAttention: '切到注意力保护',
-        cardVisible: '右下角卡片',
-        cardShow: '显示右下角卡片',
-        cardHide: '隐藏右下角卡片',
-        noticeTitle: '先说清楚：这不是待办，也不催你',
+        cardVisible: '右下角',
+        cardShow: '展开完整卡片',
+        cardHide: '收成小火苗',
+        flameHint: '点一下展开',
+        cardViewNote: '完整卡片，或者一簇小火苗；火苗鼠标停留才显示简要面板。',
+        noticeTitle: '首先',
         noticeBody: 'dsh-pray 是一个本地单机小游戏，想做的只是把「等待 DeepSeek 更新」和「你真实用 DSH 的时间」变成一点可见的积累。',
-        noticeAttention: '我们无意占据你的注意力，但它仍然可能让你想多看一眼数字——这是它的风险。所以默认的注意力保护模式会自动买 Level 和增幅器，并把右下角卡片隐藏；想看时从侧栏「期待」打开。',
+        noticeAttention: '我们无意占据你的注意力，但它仍然可能让你想多看一眼数字——这是它的风险。所以默认的注意力保护模式会自动买 Level，并把右下角收成一簇小火苗；鼠标停留才显示简要面板，移开就消失。',
         noticePrivacy: '它只读会话数、完成轮数、活跃时长这些数字，不读聊天内容；所有数据只在本机。',
         noticeChooseAttention: '用注意力保护模式',
         noticeChoosePlay: '我想手动玩',
@@ -158,7 +168,7 @@ window.__ModuleLoader__.load({
         title: 'dsh-pray · Expectation',
         panelLabel: 'Expectation',
         kicker: 'local single-player · attention protection',
-        collapse: 'Collapse to pill',
+        collapse: 'Collapse to flame',
         hide: 'Hide card (restore in sidebar)',
         expand: 'Expand',
         since: 'Since DeepSeek last updated',
@@ -210,12 +220,20 @@ window.__ModuleLoader__.load({
         max: 'MAX',
         locked: 'Unlocks at {at} lifetime expectation',
         notEnough: 'not enough',
-        runAmps: 'Run amplifiers',
-        permanentAmps: 'Permanent amplifiers',
+        habits: 'Permanent habits',
+        term: 'Level note',
+        openCodex: 'Read note',
+        closeCodex: 'Hide note',
+        termUse: 'How to use it',
+        softcap: 'Expectation cap',
+        softcapNote: 'This run caps expectation at 1e12; growth stops there until you let go or start a fresh run.',
+        permanentBonus: 'Permanent bonus',
+        temporaryBonus: 'Temporary bonus',
+        totalMultiplier: 'Total multiplier',
         urge: 'Urge',
         launch: 'Launch',
-        urgeDesc: 'Global reset: clears all levels and run amplifiers for ×1.5 global per urge.',
-        launchDesc: 'Reset of urges: clears urges, levels, and run amplifiers for ×2 global per launch.',
+        urgeDesc: 'Global reset: clears all levels for +2% permanent additive per urge (the urge layer clears on launch).',
+        launchDesc: 'Reset of urges: clears urges and all levels for +5% permanent additive per launch.',
         urges: 'Urges',
         launches: 'Launches',
         urgeCost: 'Urge cost',
@@ -223,7 +241,7 @@ window.__ModuleLoader__.load({
         launchRequires: 'Requires {n} urges',
         urgeButton: 'Urge (reset levels)',
         launchButton: 'Launch (reset urges)',
-        resetWarning: 'Click again to confirm: this clears this run’s levels and amplifiers.',
+        resetWarning: 'Click again to confirm: this clears this run’s levels.',
         confirm: 'Confirm',
         cancel: 'Cancel',
         urgeDone: 'Urge complete: ×1.5 global.',
@@ -233,13 +251,13 @@ window.__ModuleLoader__.load({
         releaseGain: 'Gain',
         releaseThreshold: 'Threshold',
         releaseButton: 'Let go of this run',
-        releaseConfirm: 'Click again to confirm: expectation, levels, urges, launches, and run amplifiers reset; wish power, release, and archive stay.',
+        releaseConfirm: 'Click again to confirm: expectation, levels, urges, and launches reset; wish power, release, and archive stay.',
         releaseCancel: 'Cancel',
         releaseBalance: 'Release',
         releaseMultiplier: 'Permanent multiplier',
         cannotRelease: 'Not enough lifetime expectation this run',
         releaseDone: 'Released; gained {n}.',
-        releaseCostNote: 'Letting go resets expectation, levels, urges, launches, and run amplifiers; wish power stays.',
+        releaseCostNote: 'Letting go resets expectation, levels, urges, and launches; wish power stays.',
         eras: 'Chronicle',
         erasEmpty: 'No update recorded yet.',
         privacyTitle: 'Privacy',
@@ -262,12 +280,12 @@ window.__ModuleLoader__.load({
         mode: 'Mode',
         modeAttention: 'Attention protection',
         modePlay: 'Play mode',
-        modeAttentionDesc: 'Automatically buys levels and run amplifiers; never auto-resets. It pauses buying when this run can let go. The card is hidden by default; open it from the sidebar.',
+        modeAttentionDesc: 'Automatically buys levels; never auto-resets. It pauses buying when this run can let go. The bottom-right stays as a small flame; hover for a brief panel.',
         modePlayDesc: 'Manual purchases; for when you want to play for a bit.',
         autoBuying: 'Auto-buying · no auto-reset',
         autoPaused: 'Auto-buy paused: this run can already let go; the decision is yours.',
         resetRun: 'Start a fresh run',
-        resetRunNote: 'Keeps wish power, release, achievements, and archive; clears this run’s expectation, levels, urges, launches, and amplifiers.',
+        resetRunNote: 'Keeps wish power, release, achievements, and archive; clears this run’s expectation, levels, urges, and launches.',
         resetRunConfirm: 'Click again: this run’s progress clears; wish power, release, and achievements stay.',
         resetRunDone: 'Fresh run started.',
         repairState: 'Repair save',
@@ -278,12 +296,14 @@ window.__ModuleLoader__.load({
         anomalyDesc: 'This run’s numbers are out of balance (the old auto-buy ran away). Start a fresh run; wish power, release, and achievements stay.',
         switchToPlay: 'Switch to play mode',
         switchToAttention: 'Switch to attention protection',
-        cardVisible: 'Bottom-right card',
-        cardShow: 'Show bottom-right card',
-        cardHide: 'Hide bottom-right card',
-        noticeTitle: 'First, this is not a todo, and it does not nag you',
+        cardVisible: 'Bottom-right',
+        cardShow: 'Expand full card',
+        cardHide: 'Collapse to flame',
+        flameHint: 'Click to expand',
+        cardViewNote: 'Full card, or a small flame; hover the flame for a brief panel.',
+        noticeTitle: 'First',
         noticeBody: 'dsh-pray is a local single-player game. It only turns “waiting for a DeepSeek update” and “time you actually spend in DSH” into a small visible accumulation.',
-        noticeAttention: 'We do not intend to take your attention, but it can still make you want one more look at the numbers — that is the risk. The default attention-protection mode buys levels and amplifiers automatically and hides the bottom-right card; open it from the sidebar when you want to look.',
+        noticeAttention: 'We do not intend to take your attention, but it can still make you want one more look at the numbers — that is the risk. The default attention-protection mode buys levels automatically and keeps the bottom-right as a small flame; hover to see a brief panel, move away and it disappears.',
         noticePrivacy: 'It only reads session counts, completed turns, and active time, never your chats; all data stays local.',
         noticeChooseAttention: 'Use attention protection',
         noticeChoosePlay: 'I want to play manually',
@@ -352,6 +372,22 @@ window.__ModuleLoader__.load({
       .dsh-pray-pill-points { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 650; font-size: 13px; }
       .dsh-pray-pill-rate { font-size: 10px; color: var(--dsw-alias-state-success-primary); }
       .dsh-pray-pill-level { font-size: 10px; color: var(--dsw-alias-label-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .dsh-pray-flame-root { position: fixed; right: 18px; bottom: 18px; z-index: 40; pointer-events: auto; }
+      .dsh-pray-flame-btn { position: relative; width: 46px; height: 46px; border: 0; border-radius: 50%;
+        background: color-mix(in srgb, var(--dsw-alias-bg-overlay) 82%, transparent); cursor: pointer;
+        display: grid; place-items: center; color: var(--dsw-alias-brand-primary);
+        box-shadow: 0 8px 30px color-mix(in srgb, var(--dsw-alias-state-warn-primary) 26%, transparent); }
+      .dsh-pray-flame-btn:hover { background: var(--dsw-alias-bg-overlay); }
+      .dsh-pray-flame-dot { position: absolute; right: 10px; bottom: 9px; width: 5px; height: 5px; border-radius: 50%;
+        background: var(--dsw-alias-state-success-primary); box-shadow: 0 0 8px var(--dsw-alias-state-success-primary); }
+      .dsh-pray-flame-panel { position: absolute; right: 0; bottom: 54px; width: 226px; box-sizing: border-box;
+        background: var(--dsw-alias-bg-overlay); color: var(--dsw-alias-label-primary);
+        border: 1px solid var(--dsw-alias-border-l1); border-radius: 12px; padding: 10px;
+        box-shadow: 0 16px 44px color-mix(in srgb, var(--dsw-alias-label-primary) 18%, transparent); }
+      .dsh-pray-flame-panel-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
+        font-size: 16px; font-weight: 650; }
+      .dsh-pray-flame-panel-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; font-size: 11px; color: var(--dsw-alias-label-secondary); }
+      .dsh-pray-flame-hint { margin-top: 8px; font-size: 10px; color: var(--dsw-alias-brand-primary); text-align: right; }
       .dsh-pray-loading { width: 260px; }
       .dsh-pray-flame { flex: 0 0 auto; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--dsw-alias-state-warn-primary) 40%, transparent));
         animation: dsh-pray-flicker 2.8s ease-in-out infinite; }
@@ -407,6 +443,13 @@ window.__ModuleLoader__.load({
       .dsh-pray-level-buy { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
       .dsh-pray-level-cost { font-size: 10px; color: var(--dsw-alias-label-secondary); white-space: nowrap; }
       .dsh-pray-level-cost b { color: var(--dsw-alias-label-primary); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .dsh-pray-level-term { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+      .dsh-pray-term-badge { display: inline-flex; align-items: center; border: 1px solid var(--dsw-alias-border-l1);
+        border-radius: 999px; padding: 1px 8px; font-size: 9px; color: var(--dsw-alias-brand-primary); }
+      .dsh-pray-codex { margin-top: 8px; padding: 10px; border-left: 2px solid var(--dsw-alias-brand-primary);
+        background: var(--dsw-alias-bg-layer-2); border-radius: 0 8px 8px 0; }
+      .dsh-pray-codex-title { font-weight: 650; font-size: 12px; margin-bottom: 4px; }
+      .dsh-pray-codex-use { color: var(--dsw-alias-label-secondary); font-size: 11px; line-height: 1.6; margin-top: 6px; }
       .dsh-pray-locked { color: var(--dsw-alias-state-warn-primary); font-size: 11px; text-align: right; }
       .dsh-pray-reset-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 700; }
       .dsh-pray-reset-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
@@ -504,9 +547,22 @@ window.__ModuleLoader__.load({
 
     function setStoredBool(key, value) {
       try { localStorage.setItem(key, value ? '1' : '0') } catch { /* ignore */ }
-      if (key === CARD_KEY) {
-        try { window.dispatchEvent(new CustomEvent('dsh-pray-card-visibility', { detail: value })) } catch { /* ignore */ }
+    }
+
+    function getCardView() {
+      try {
+        const current = localStorage.getItem(CARD_VIEW_KEY)
+        if (current === 'flame' || current === 'full') return current
+        return localStorage.getItem('dsh-pray-card-visible') === '0' ? 'flame' : 'full'
+      } catch {
+        return 'full'
       }
+    }
+
+    function setCardView(view) {
+      const next = view === 'flame' ? 'flame' : 'full'
+      try { localStorage.setItem(CARD_VIEW_KEY, next) } catch { /* ignore */ }
+      try { window.dispatchEvent(new CustomEvent('dsh-pray-card-view', { detail: next })) } catch { /* ignore */ }
     }
 
     function flameIcon(size, color) {
@@ -655,7 +711,7 @@ window.__ModuleLoader__.load({
           })
         } catch { /* ignore */ }
         setStoredBool(NOTICE_KEY, true)
-        setStoredBool(CARD_KEY, mode === 'play')
+        setCardView(mode === 'play' ? 'full' : 'flame')
         setOpen(false)
       }
       if (!open) return null
@@ -684,7 +740,6 @@ window.__ModuleLoader__.load({
     function PrayCard(props) {
       const t = makeT(props)
       const { state, error } = usePrayState(1000)
-      const [collapsed, setCollapsed] = useState(false)
       const [now, setNow] = useState(() => Date.now())
       const animated = useAnimatedNumber(state?.expectation ?? 0, state?.expectationPerSecond ?? 0, 60)
 
@@ -718,22 +773,6 @@ window.__ModuleLoader__.load({
         )
       }
 
-      if (collapsed) {
-        return h(
-          'div',
-          { className: 'dsh-pray-root' },
-          h('style', null, CSS),
-          h(
-            'button',
-            { type: 'button', className: 'dsh-pray-pill', onClick: () => setCollapsed(false), title: t('expand'), 'aria-label': t('expand') },
-            flameIcon(15),
-            h('span', { className: 'dsh-pray-pill-points' }, formatNumber(animated, notation)),
-            h('span', { className: 'dsh-pray-pill-rate' }, `+${formatNumber(state.expectationPerSecond, notation)}/s`),
-            h('span', { className: 'dsh-pray-pill-level' }, level ? `L${level.index}` : ''),
-          ),
-        )
-      }
-
       const progress = Math.round((next?.progress ?? 1) * 100)
       return h(
         'div',
@@ -749,8 +788,7 @@ window.__ModuleLoader__.load({
             h(
               'div',
               { className: 'dsh-pray-head-actions' },
-              h('button', { type: 'button', className: 'dsh-pray-icon', onClick: () => setCollapsed(true), title: t('collapse'), 'aria-label': t('collapse') }, '−'),
-              h('button', { type: 'button', className: 'dsh-pray-icon', onClick: () => props.onHide?.(), title: t('hide'), 'aria-label': t('hide') }, '×'),
+              h('button', { type: 'button', className: 'dsh-pray-icon', onClick: () => props.onCollapse?.(), title: t('collapse'), 'aria-label': t('collapse') }, '−'),
             ),
           ),
           h(
@@ -809,18 +847,50 @@ window.__ModuleLoader__.load({
       )
     }
 
+    function FlameCard(props) {
+      const t = makeT(props)
+      const { state } = usePrayState(1000)
+      const [hover, setHover] = useState(false)
+      const notation = state?.settings?.notation || 'auto'
+      return h(
+        'div',
+        {
+          className: 'dsh-pray-flame-root',
+          onMouseEnter: () => setHover(true),
+          onMouseLeave: () => setHover(false),
+        },
+        hover && state
+          ? h(
+              'div',
+              { className: 'dsh-pray-flame-panel' },
+              h('div', { className: 'dsh-pray-flame-panel-head' }, h('span', { className: 'dsh-pray-label' }, t('expectation')), h('span', { className: 'dsh-pray-mono' }, formatNumber(state.expectation, notation))),
+              h('div', { className: 'dsh-pray-flame-panel-row' }, h('span', null, t('perSecond')), h('span', { className: 'dsh-pray-mono' }, `+${formatNumber(state.expectationPerSecond, notation)}/s`)),
+              h('div', { className: 'dsh-pray-flame-panel-row' }, h('span', null, t('level')), h('span', { className: 'dsh-pray-mono' }, state.highestLevel ? `L${state.highestLevel.index}` : '—')),
+              h('div', { className: 'dsh-pray-flame-panel-row' }, h('span', null, t('wish')), h('span', { className: 'dsh-pray-mono' }, formatNumber(state.wish, notation))),
+              h('div', { className: 'dsh-pray-flame-panel-row' }, h('span', null, t('mode')), h('span', { className: 'dsh-pray-tag' }, state.mode === 'attention' ? t('modeAutoTag') : t('modePlayTag'))),
+              h('div', { className: 'dsh-pray-flame-hint' }, t('flameHint')),
+            )
+          : null,
+        h(
+          'button',
+          { type: 'button', className: 'dsh-pray-flame-btn', onClick: () => props.onExpand?.(), title: t('flameHint'), 'aria-label': t('flameHint') },
+          flameIcon(24),
+          h('span', { className: 'dsh-pray-flame-dot' }),
+        ),
+      )
+    }
+
     function PrayCardHost(props) {
-      const [visible, setVisible] = useState(() => getStoredBool(CARD_KEY, true))
+      const [view, setView] = useState(() => getCardView())
       useEffect(() => {
         const onChange = (event) => {
-          if (typeof event.detail === 'boolean') setVisible(event.detail)
-          else setVisible(getStoredBool(CARD_KEY, true))
+          setView(event.detail === 'flame' ? 'flame' : event.detail === 'full' ? 'full' : getCardView())
         }
-        window.addEventListener('dsh-pray-card-visibility', onChange)
-        return () => window.removeEventListener('dsh-pray-card-visibility', onChange)
+        window.addEventListener('dsh-pray-card-view', onChange)
+        return () => window.removeEventListener('dsh-pray-card-view', onChange)
       }, [])
-      if (!visible) return null
-      return h(PrayCard, { ...props, onHide: () => setStoredBool(CARD_KEY, false) })
+      if (view === 'flame') return h(FlameCard, { ...props, onExpand: () => setCardView('full') })
+      return h(PrayCard, { ...props, onCollapse: () => setCardView('flame') })
     }
 
     function StatCard({ label, value, note, accent, small }) {
@@ -834,6 +904,7 @@ window.__ModuleLoader__.load({
     }
 
     function LevelRow({ level, t, notation, busy, auto, run }) {
+      const [codex, setCodex] = useState(false)
       const cost10 = Number.isFinite(level.cost10) ? formatNumber(level.cost10, notation) : '∞'
       return h(
         'div',
@@ -852,6 +923,22 @@ window.__ModuleLoader__.load({
             h('span', null, `${t('multiplierShort')} `, h('b', null, `×${formatNumber(level.multiplier, notation)}`)),
             h('span', null, `${t('production')} `, h('b', null, `${formatNumber(level.production, notation)}/s`)),
           ),
+          h(
+            'div',
+            { className: 'dsh-pray-level-term' },
+            h('span', { className: 'dsh-pray-term-badge' }, level.term || t('term')),
+            h('button', { type: 'button', className: 'dsh-pray-btn ghost', onClick: () => setCodex(!codex) }, codex ? t('closeCodex') : t('openCodex')),
+          ),
+          codex
+            ? h(
+                'div',
+                { className: 'dsh-pray-codex' },
+                h('div', { className: 'dsh-pray-codex-title' }, level.term),
+                h('div', { className: 'dsh-pray-note' }, level.termText),
+                h('div', { className: 'dsh-pray-codex-use' }, h('strong', null, t('termUse')), '：', level.termUse),
+                h('div', { className: 'dsh-pray-note', style: { marginTop: 6 } }, level.story),
+              )
+            : null,
         ),
         h(
           'div',
@@ -891,16 +978,15 @@ window.__ModuleLoader__.load({
       const [confirmReset, setConfirmReset] = useState(null)
       const [notice, setNotice] = useState(null)
       const [celebrate, setCelebrate] = useState(null)
-      const [cardVisible, setCardVisibleState] = useState(() => getStoredBool(CARD_KEY, true))
+      const [cardView, setCardViewState] = useState(() => getCardView())
       const animated = useAnimatedNumber(state?.expectation ?? 0, state?.expectationPerSecond ?? 0, 80)
 
       useEffect(() => {
         const onChange = (event) => {
-          if (typeof event.detail === 'boolean') setCardVisibleState(event.detail)
-          else setCardVisibleState(getStoredBool(CARD_KEY, true))
+          setCardViewState(event.detail === 'flame' ? 'flame' : event.detail === 'full' ? 'full' : getCardView())
         }
-        window.addEventListener('dsh-pray-card-visibility', onChange)
-        return () => window.removeEventListener('dsh-pray-card-visibility', onChange)
+        window.addEventListener('dsh-pray-card-view', onChange)
+        return () => window.removeEventListener('dsh-pray-card-view', onChange)
       }, [])
 
       const notation = state?.settings?.notation || 'auto'
@@ -957,8 +1043,7 @@ window.__ModuleLoader__.load({
       const next = state.nextLevel
       const progress = Math.round((next?.progress ?? 1) * 100)
       const levels = state.levels || []
-      const runAmps = state.runAmps || []
-      const permanentAmps = state.permanentAmps || []
+      const habits = state.habits || []
       const auto = state.mode === 'attention'
       const achievements = state.achievements || []
       const anomaly = state.lifetimeExpectation > 1e18 || state.expectationPerSecond > 1e12
@@ -1020,9 +1105,22 @@ window.__ModuleLoader__.load({
           h(
             'div',
             { className: 'dsh-pray-row' },
-            h('span', { className: 'dsh-pray-note' }, `${t('waitBonus')} ×${state.waitMultiplier.toFixed(2)}`),
-            h('span', { className: 'dsh-pray-note' }, `${t('urge')} ×${state.urgeMultiplier.toFixed(2)} · ${t('launch')} ×${state.launchMultiplier.toFixed(2)} · ${t('achievements')} ×${state.achievementMultiplier.toFixed(2)}`),
+            h('span', { className: 'dsh-pray-note' }, `${t('waitBonus')} +${Math.round((state.waitMultiplier - 1) * 100)}%`),
+            h('span', { className: 'dsh-pray-note' }, `${t('urge')} +${Math.round((state.urgeMultiplier - 1) * 100)}% · ${t('launch')} +${Math.round((state.launchMultiplier - 1) * 100)}% · ${t('achievements')} +${Math.round((state.achievementMultiplier - 1) * 100)}%`),
           ),
+          h('div', { className: 'dsh-pray-row' },
+            h('span', { className: 'dsh-pray-note' }, t('permanentBonus')),
+            h('span', { className: 'dsh-pray-mono' }, `+${Math.round(state.permanentBonus * 100)}%`),
+          ),
+          h('div', { className: 'dsh-pray-row' },
+            h('span', { className: 'dsh-pray-note' }, t('temporaryBonus')),
+            h('span', { className: 'dsh-pray-mono' }, `+${Math.round(state.temporaryBonus * 100)}%`),
+          ),
+          h('div', { className: 'dsh-pray-row' },
+            h('span', { className: 'dsh-pray-note' }, t('totalMultiplier')),
+            h('span', { className: 'dsh-pray-mono' }, `×${state.totalMultiplier.toFixed(2)}`),
+          ),
+          h('div', { className: 'dsh-pray-note', style: { marginTop: 8 } }, t('softcapNote')),
         ),
         h(
           'div',
@@ -1031,7 +1129,7 @@ window.__ModuleLoader__.load({
             'div',
             { className: 'dsh-pray-panelcard accent' },
             h('div', { className: 'dsh-pray-cardtitle' }, t('urge')),
-            h('div', { className: 'dsh-pray-reset-value' }, `×${state.urgeMultiplier.toFixed(2)}`),
+            h('div', { className: 'dsh-pray-reset-value' }, `+${Math.round((state.urgeMultiplier - 1) * 100)}%`),
             h('div', { className: 'dsh-pray-note' }, t('urgeDesc')),
             h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('urges')), h('span', { className: 'dsh-pray-mono' }, state.urges)),
             h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('urgeCost')), h('span', { className: 'dsh-pray-mono' }, formatNumber(state.urgeCost, notation))),
@@ -1050,7 +1148,7 @@ window.__ModuleLoader__.load({
             'div',
             { className: 'dsh-pray-panelcard accent' },
             h('div', { className: 'dsh-pray-cardtitle' }, t('launch')),
-            h('div', { className: 'dsh-pray-reset-value' }, `×${state.launchMultiplier.toFixed(2)}`),
+            h('div', { className: 'dsh-pray-reset-value' }, `+${Math.round((state.launchMultiplier - 1) * 100)}%`),
             h('div', { className: 'dsh-pray-note' }, t('launchDesc')),
             h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('launches')), h('span', { className: 'dsh-pray-mono' }, state.launches)),
             h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, localize(t, 'launchRequires', { n: state.launchRequiredUrges })), h('span', { className: 'dsh-pray-mono' }, `${state.urges}/${state.launchRequiredUrges}`)),
@@ -1077,20 +1175,6 @@ window.__ModuleLoader__.load({
           auto,
           run,
         }))),
-        h('div', { className: 'dsh-pray-cardtitle', style: { margin: '18px 0 8px' } }, t('runAmps')),
-        h(
-          'div',
-          { className: 'dsh-pray-grid' },
-          runAmps.map((amp) => h(
-            'div',
-            { className: 'dsh-pray-panelcard', key: amp.id },
-            h('div', { style: { fontWeight: 600 } }, amp.name),
-            h('div', { className: 'dsh-pray-note' }, amp.effect),
-            h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('level')), h('span', { className: 'dsh-pray-mono' }, amp.level)),
-            h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('cost')), h('span', { className: 'dsh-pray-mono' }, formatNumber(amp.cost, notation))),
-            h('div', { className: 'dsh-pray-actions' }, h('button', { className: 'dsh-pray-btn primary', disabled: auto || !amp.canBuy || busy, onClick: () => run({ type: 'buyRunAmp', id: amp.id }) }, t('buy'))),
-          )),
-        ),
         h(
           'div',
           { className: 'dsh-pray-grid-wide', style: { marginTop: 12 } },
@@ -1130,18 +1214,18 @@ window.__ModuleLoader__.load({
           h(StatCard, { label: t('active'), value: formatActive(state.activity.activeSeconds, t), note: `${t('streak')} ${state.activity.streak}${t('days')}` }),
         ),
         h('div', { className: 'dsh-pray-note', style: { margin: '12px 0' } }, t('wishSources')),
-        h('div', { className: 'dsh-pray-cardtitle', style: { marginBottom: 8 } }, t('permanentAmps')),
+        h('div', { className: 'dsh-pray-cardtitle', style: { marginBottom: 8 } }, t('habits')),
         h(
           'div',
           { className: 'dsh-pray-grid' },
-          permanentAmps.map((amp) => h(
+          habits.map((habit) => h(
             'div',
-            { className: 'dsh-pray-panelcard', key: amp.id },
-            h('div', { style: { fontWeight: 600 } }, amp.name),
-            h('div', { className: 'dsh-pray-note' }, amp.effect),
-            h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('level')), h('span', { className: 'dsh-pray-mono' }, amp.level)),
-            h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('cost')), h('span', { className: 'dsh-pray-mono' }, formatNumber(amp.cost, notation))),
-            h('div', { className: 'dsh-pray-actions' }, h('button', { className: 'dsh-pray-btn primary', disabled: !amp.canBuy || busy, onClick: () => run({ type: 'buyPermanentAmp', id: amp.id }) }, t('buy'))),
+            { className: 'dsh-pray-panelcard', key: habit.id },
+            h('div', { style: { fontWeight: 600 } }, habit.name),
+            h('div', { className: 'dsh-pray-note' }, habit.effect),
+            h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('level')), h('span', { className: 'dsh-pray-mono' }, habit.level)),
+            h('div', { className: 'dsh-pray-row' }, h('span', { className: 'dsh-pray-note' }, t('cost')), h('span', { className: 'dsh-pray-mono' }, formatNumber(habit.cost, notation))),
+            h('div', { className: 'dsh-pray-actions' }, h('button', { className: 'dsh-pray-btn primary', disabled: !habit.canBuy || busy, onClick: () => run({ type: 'buyPermanentAmp', id: habit.id }) }, t('buy'))),
           )),
         ),
         h(
@@ -1207,6 +1291,13 @@ window.__ModuleLoader__.load({
             { className: `dsh-pray-chapter${unlocked ? '' : ' locked'}`, key: chapter.level },
             h('div', { className: 'dsh-pray-chapter-title' }, `${localize(t, 'storyChapter', { n: chapter.level })} · ${chapter.title}`),
             h('div', { className: 'dsh-pray-note' }, unlocked ? chapter.text : localize(t, 'storyLocked', { n: chapter.level })),
+            unlocked && levels[chapter.level - 1]?.term
+              ? h('div', { className: 'dsh-pray-codex', style: { marginTop: 8 } },
+                  h('div', { className: 'dsh-pray-codex-title' }, levels[chapter.level - 1].term),
+                  h('div', { className: 'dsh-pray-note' }, levels[chapter.level - 1].termText),
+                  h('div', { className: 'dsh-pray-codex-use' }, h('strong', null, t('termUse')), '：', levels[chapter.level - 1].termUse),
+                )
+              : null,
           )
         })),
         h('div', { className: 'dsh-pray-cardtitle', style: { margin: '18px 0 8px' } }, t('achievements')),
@@ -1280,15 +1371,16 @@ window.__ModuleLoader__.load({
             'div',
             { className: 'dsh-pray-panelcard' },
             h('div', { className: 'dsh-pray-cardtitle' }, t('cardVisible')),
+            h('div', { className: 'dsh-pray-note', style: { marginTop: 8 } }, t('cardViewNote')),
             h('div', { className: 'dsh-pray-actions' },
               h('button', {
-                className: 'dsh-pray-btn',
-                onClick: () => {
-                  const nextVisible = !cardVisible
-                  setStoredBool(CARD_KEY, nextVisible)
-                  setCardVisibleState(nextVisible)
-                },
-              }, cardVisible ? t('cardHide') : t('cardShow')),
+                className: `dsh-pray-btn${cardView === 'full' ? ' primary' : ''}`,
+                onClick: () => { setCardView('full'); setCardViewState('full') },
+              }, t('cardShow')),
+              h('button', {
+                className: `dsh-pray-btn${cardView === 'flame' ? ' primary' : ''}`,
+                onClick: () => { setCardView('flame'); setCardViewState('flame') },
+              }, t('cardHide')),
             ),
           ),
           h(

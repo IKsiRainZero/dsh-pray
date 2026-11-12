@@ -19,7 +19,6 @@ import {
   urge,
   buyLevel,
   buyPermanentAmp,
-  buyRunAmp,
   createState,
   advance,
   migrateState,
@@ -231,8 +230,6 @@ async function handleAction(req, res, statePromise) {
   let result = { ok: false, error: '未知操作' }
   if (type === 'buyLevel') {
     result = buyLevel(state, payload.id, payload.count === 'max' ? 'max' : Number(payload.count) === 10 ? 10 : 1)
-  } else if (type === 'buyRunAmp') {
-    result = buyRunAmp(state, payload.id)
   } else if (type === 'buyPermanentAmp') {
     result = buyPermanentAmp(state, payload.id)
   } else if (type === 'urge') {

@@ -14,13 +14,14 @@ import {
   ACHIEVEMENTS,
   ACTIVE_SECONDS_PER_WISH,
   DAILY_WISH_CAP,
+  EXPECTATION_CAP,
   LAUNCH_MULTIPLIER,
   LEVELS,
+  LEVEL_PURCHASE_MULTIPLIER,
   OFFLINE_CAP_PER_LEVEL_SECONDS,
   OFFLINE_CAP_SECONDS,
   PERMANENT_AMPS,
   RELEASE_THRESHOLD,
-  RUN_AMPS,
   SCHEMA,
   URGE_MULTIPLIER,
   VERSION,
@@ -32,7 +33,6 @@ import {
   launchRequiredUrges,
   levelById,
   permanentAmpById,
-  runAmpById,
   urgeCost,
 } from './balance.js'
 
@@ -83,7 +83,6 @@ export function createState(now = Date.now()) {
     launches: 0,
     achievements: [],
     levels: emptyLevels(),
-    runAmps: Object.fromEntries(RUN_AMPS.map((def) => [def.id, 0])),
     permanentAmps: Object.fromEntries(PERMANENT_AMPS.map((def) => [def.id, 0])),
     activity: {
       sessions: 0,
@@ -157,14 +156,8 @@ export function migrateState(raw, now = Date.now()) {
         produced: 0,
       }
     }
-    state.runAmps.level1 = Math.max(0, Math.floor(Number(raw.runAmps?.dimA) || 0))
-    state.runAmps.level2 = Math.max(0, Math.floor(Number(raw.runAmps?.dimB) || 0))
-    state.runAmps.level3 = Math.max(0, Math.floor(Number(raw.runAmps?.dimC) || 0))
-    state.runAmps.level4 = 0
-    state.runAmps.level5 = 0
-    state.runAmps.global = Math.max(0, Math.floor(Number(raw.runAmps?.global) || 0))
   }
-  if (Number(raw.schema) === 3 && raw.levels) {
+  if (Number(raw.schema) >= 3 && raw.levels) {
     for (const def of LEVELS) {
       const old = raw.levels[def.id] || {}
       state.levels[def.id] = {
@@ -173,11 +166,8 @@ export function migrateState(raw, now = Date.now()) {
         produced: clamp(old.produced),
       }
     }
-    for (const def of RUN_AMPS) {
-      state.runAmps[def.id] = Math.max(0, Math.floor(Number(raw.runAmps?.[def.id]) || 0))
-    }
   }
-  for (const legacy of ['dimA', 'dimB', 'dimC']) delete state.runAmps[legacy]
+  delete state.runAmps
 
   state.lastTickAt = iso(now)
   state.lastOffline = null
@@ -213,11 +203,7 @@ export function normalizeState(raw, now = Date.now()) {
       produced: clamp(level.produced),
     }
   }
-  state.runAmps = state.runAmps && typeof state.runAmps === 'object' ? state.runAmps : {}
-  for (const legacy of ['dimA', 'dimB', 'dimC']) delete state.runAmps[legacy]
-  for (const def of RUN_AMPS) {
-    state.runAmps[def.id] = Math.max(0, Math.floor(Number(state.runAmps[def.id]) || 0))
-  }
+  delete state.runAmps
   state.permanentAmps = state.permanentAmps && typeof state.permanentAmps === 'object'
     ? state.permanentAmps
     : {}
@@ -264,13 +250,21 @@ export function waitingDays(state, now = Date.now()) {
   return Math.max(0, (now - anchor) / 86400000)
 }
 
+export function waitingBonus(state, now = Date.now()) {
+  return Math.min(0.5, waitingDays(state, now) * WAITING_BONUS_PER_DAY)
+}
+
 export function waitingMultiplier(state, now = Date.now()) {
-  return 1 + Math.min(WAITING_BONUS_MAX, waitingDays(state, now) * WAITING_BONUS_PER_DAY)
+  return 1 + waitingBonus(state, now)
+}
+
+export function versionBonus(state, now = Date.now()) {
+  const until = Date.parse(state.versionBonusUntil)
+  return Number.isFinite(until) && until > now ? 0.25 : 0
 }
 
 export function versionMultiplier(state, now = Date.now()) {
-  const until = Date.parse(state.versionBonusUntil)
-  return Number.isFinite(until) && until > now ? VERSION_BONUS_MULTIPLIER : 1
+  return 1 + versionBonus(state, now)
 }
 
 export function offlineCapSeconds(state) {
@@ -278,9 +272,38 @@ export function offlineCapSeconds(state) {
   return Math.min(MAX_OFFLINE_SECONDS, cap)
 }
 
-export function achievementMultiplier(state) {
+export function releaseBonus(state) {
+  // Diminishing: at 1 release ~0.10, 10 ~0.79, 50 ~1.84, cap 2.
+  return 2 * (1 - Math.exp(-(state.release || 0) / 20))
+}
+
+export function achievementBonus(state) {
   const unlocked = new Set(state.achievements || [])
-  return 1 + ACHIEVEMENTS.reduce((sum, def) => sum + (unlocked.has(def.id) ? def.reward : 0), 0)
+  return ACHIEVEMENTS.reduce((sum, def) => sum + (unlocked.has(def.id) ? def.reward : 0), 0)
+}
+
+export function achievementMultiplier(state) {
+  return 1 + achievementBonus(state)
+}
+
+export function urgeBonus(state) {
+  return 0.02 * (state.urges || 0)
+}
+
+export function launchBonus(state) {
+  return 0.05 * (state.launches || 0)
+}
+
+export function focusBonus(state) {
+  return 0.05 * (state.permanentAmps.focus || 0)
+}
+
+export function permanentBonus(state) {
+  return releaseBonus(state) + achievementBonus(state) + focusBonus(state) + launchBonus(state)
+}
+
+export function temporaryBonus(state, now = Date.now()) {
+  return versionBonus(state, now) + waitingBonus(state, now)
 }
 
 export function checkAchievements(state) {
@@ -298,24 +321,17 @@ export function checkAchievements(state) {
 }
 
 export function globalMultiplier(state, now = Date.now()) {
-  return (1 + 0.25 * (state.runAmps.global || 0)) *
-    (1 + 0.1 * (state.permanentAmps.focus || 0)) *
-    (1 + 0.1 * state.release) *
-    Math.pow(URGE_MULTIPLIER, state.urges || 0) *
-    Math.pow(LAUNCH_MULTIPLIER, state.launches || 0) *
-    achievementMultiplier(state) *
-    versionMultiplier(state, now)
+  return 1 + permanentBonus(state) + temporaryBonus(state, now) + urgeBonus(state)
 }
 
 export function levelMultiplier(state, id) {
   const level = state.levels[id]
-  const amp = state.runAmps[id] || 0
-  return (1 + 0.5 * amp) * (2 ** Math.floor((level?.bought || 0) / 10))
+  return Math.pow(LEVEL_PURCHASE_MULTIPLIER, Math.floor((level?.bought || 0) / 10))
 }
 
 export function production(state, now = Date.now()) {
   const global = globalMultiplier(state, now)
-  const base = waitingMultiplier(state, now) * global
+  const base = global
   const mult = [null]
   const prod = [null]
   for (const def of LEVELS) {
@@ -334,9 +350,12 @@ export function production(state, now = Date.now()) {
 
 function simulate(state, dt, now) {
   const p = production(state, now)
-  state.expectation = clamp(state.expectation + p.rate * dt)
-  state.runExpectation = clamp(state.runExpectation + p.rate * dt)
-  state.lifetimeExpectation = clamp(state.lifetimeExpectation + p.rate * dt)
+  const rawGain = p.rate * dt
+  const room = Math.max(0, EXPECTATION_CAP - state.expectation)
+  const gain = Math.min(rawGain, room)
+  state.expectation = clamp(state.expectation + gain)
+  state.runExpectation = clamp(state.runExpectation + gain)
+  state.lifetimeExpectation = clamp(state.lifetimeExpectation + gain)
   for (const def of LEVELS) {
     state.levels[def.id].produced = clamp(state.levels[def.id].produced + p.prod[def.index] * dt)
   }
@@ -416,21 +435,6 @@ export function buyLevel(state, id, count = 1) {
   return { ok: true, purchased: plan.purchased, total: plan.total }
 }
 
-export function runAmpCost(state, def) {
-  const level = state.runAmps[def.id] || 0
-  return def.baseCost * Math.pow(def.growth, level)
-}
-
-export function buyRunAmp(state, id) {
-  const def = runAmpById(id)
-  if (!def) return { ok: false, error: '未知增幅器' }
-  const cost = runAmpCost(state, def)
-  if (state.expectation < cost) return { ok: false, error: '期待不足' }
-  state.expectation = clamp(state.expectation - cost)
-  state.runAmps[id] = (state.runAmps[id] || 0) + 1
-  return { ok: true, level: state.runAmps[id], total: cost }
-}
-
 export function permanentAmpCost(state, def) {
   const level = state.permanentAmps[def.id] || 0
   return def.baseCost * Math.pow(def.growth, level)
@@ -438,7 +442,7 @@ export function permanentAmpCost(state, def) {
 
 export function buyPermanentAmp(state, id) {
   const def = permanentAmpById(id)
-  if (!def) return { ok: false, error: '未知永久增幅' }
+  if (!def) return { ok: false, error: '未知习惯' }
   const cost = permanentAmpCost(state, def)
   if (state.wish < cost) return { ok: false, error: '愿力不足' }
   state.wish = clamp(state.wish - cost)
@@ -447,36 +451,22 @@ export function buyPermanentAmp(state, id) {
 }
 
 /**
- * Attention-protection mode: buy levels and run amplifiers automatically,
- * but never perform a reset (催更 / 发版 / 释怀) on its own. Those remain
- * deliberate checkpoints.
+ * Attention-protection mode: buy levels automatically, but never perform a
+ * reset (催更 / 发版 / 释怀) on its own. Those remain deliberate checkpoints.
  */
 export function applyAuto(state, passes = 3) {
   if (state.settings?.mode !== 'attention') return 0
   if (state.runExpectation >= RELEASE_THRESHOLD) return 0
   let actions = 0
   for (let pass = 0; pass < passes; pass += 1) {
-    if (actions >= 6) break
+    if (actions >= 2) break
     let changed = false
     for (const def of LEVELS) {
-      if (actions >= 6) break
+      if (actions >= 2) break
       if (state.lifetimeExpectation < def.unlockAt) continue
-      const plan10 = levelCost(state, def.id, 10)
-      if (plan10?.affordable && plan10.purchased === 10) {
-        const result = buyLevel(state, def.id, 10)
-        if (result.ok) { actions += 1; changed = true; continue }
-      }
       const plan1 = levelCost(state, def.id, 1)
       if (plan1?.affordable) {
         const result = buyLevel(state, def.id, 1)
-        if (result.ok) { actions += 1; changed = true }
-      }
-    }
-    for (const def of RUN_AMPS) {
-      if (actions >= 6) break
-      const cost = runAmpCost(state, def)
-      if (state.expectation >= cost) {
-        const result = buyRunAmp(state, def.id)
         if (result.ok) { actions += 1; changed = true }
       }
     }
@@ -495,7 +485,6 @@ export function resetRun(state, now = Date.now()) {
   state.lifetimeExpectation = 0
   state.runExpectation = 0
   state.levels = emptyLevels()
-  state.runAmps = Object.fromEntries(RUN_AMPS.map((def) => [def.id, 0]))
   state.urges = 0
   state.launches = 0
   state.lastOffline = null
@@ -538,12 +527,11 @@ export function canLaunch(state) {
     state.expectation >= currentLaunchCost(state)
 }
 
-function resetLevelsAndAmps(state) {
+function resetLevels(state) {
   for (const def of LEVELS) {
     state.levels[def.id].owned = 0
     state.levels[def.id].bought = 0
   }
-  for (const def of RUN_AMPS) state.runAmps[def.id] = 0
 }
 
 export function urge(state) {
@@ -551,7 +539,7 @@ export function urge(state) {
   if (state.expectation < cost) return { ok: false, error: '期待不足，无法催更' }
   state.expectation = 0
   state.urges = (state.urges || 0) + 1
-  resetLevelsAndAmps(state)
+  resetLevels(state)
   state.lastOffline = null
   checkAchievements(state)
   return { ok: true, cost, urges: state.urges }
@@ -567,7 +555,7 @@ export function launch(state) {
   state.expectation = 0
   state.launches = (state.launches || 0) + 1
   state.urges = 0
-  resetLevelsAndAmps(state)
+  resetLevels(state)
   state.lastOffline = null
   checkAchievements(state)
   return { ok: true, cost, required, launches: state.launches }
@@ -590,7 +578,7 @@ export function release(state, now = Date.now()) {
   state.runExpectation = 0
   state.urges = 0
   state.launches = 0
-  resetLevelsAndAmps(state)
+  resetLevels(state)
   state.lastOffline = null
   checkAchievements(state)
   return { ok: true, gain, release: state.release }
@@ -632,7 +620,7 @@ export function view(state, now = Date.now()) {
   const nextProgress = next
     ? Math.min(1, Math.max(0, (state.lifetimeExpectation - highest.unlockAt) / (next.unlockAt - highest.unlockAt)))
     : 1
-  const dailyCap = DAILY_WISH_CAP + 5 * (state.permanentAmps.echo || 0)
+  const dailyCap = DAILY_WISH_CAP + 3 * (state.permanentAmps.echo || 0)
   const levels = LEVELS.map((def) => {
     const level = state.levels[def.id]
     const cost1 = levelUnitCost(state, def, level.bought)
@@ -652,12 +640,7 @@ export function view(state, now = Date.now()) {
       canBuy10: unlocked && plan10?.affordable === true,
     }
   })
-  const runAmps = RUN_AMPS.map((def) => {
-    const level = state.runAmps[def.id] || 0
-    const cost = runAmpCost(state, def)
-    return { ...def, level, cost, canBuy: state.expectation >= cost }
-  })
-  const permanentAmps = PERMANENT_AMPS.map((def) => {
+  const habits = PERMANENT_AMPS.map((def) => {
     const level = state.permanentAmps[def.id] || 0
     const cost = permanentAmpCost(state, def)
     return { ...def, level, cost, canBuy: state.wish >= cost }
@@ -681,7 +664,7 @@ export function view(state, now = Date.now()) {
     wish: state.wish,
     wishEarned: state.wishEarned,
     release: state.release,
-    releaseMultiplier: 1 + 0.1 * state.release,
+    releaseMultiplier: 1 + releaseBonus(state),
     lastReleaseGain: state.lastReleaseGain,
     lastReleaseAt: state.lastReleaseAt,
     levels,
@@ -704,10 +687,13 @@ export function view(state, now = Date.now()) {
     launchRequiredUrges: currentLaunchRequired(state),
     canUrge: canUrge(state),
     canLaunch: canLaunch(state),
-    urgeMultiplier: Math.pow(URGE_MULTIPLIER, state.urges || 0),
-    launchMultiplier: Math.pow(LAUNCH_MULTIPLIER, state.launches || 0),
-    runAmps,
-    permanentAmps,
+    urgeMultiplier: 1 + urgeBonus(state),
+    launchMultiplier: 1 + launchBonus(state),
+    habits,
+    permanentBonus: permanentBonus(state),
+    temporaryBonus: temporaryBonus(state, now),
+    totalMultiplier: globalMultiplier(state, now),
+    softcapActive: state.expectation >= EXPECTATION_CAP,
     achievements: ACHIEVEMENTS.map((def) => ({
       id: def.id,
       name: def.name,
@@ -715,7 +701,7 @@ export function view(state, now = Date.now()) {
       reward: def.reward,
       unlocked: (state.achievements || []).includes(def.id),
     })),
-    achievementMultiplier: achievementMultiplier(state),
+    achievementMultiplier: 1 + achievementBonus(state),
     mode: state.settings?.mode || 'attention',
     nextUnlock: next
       ? { kind: 'level', index: next.index, name: next.name, at: next.unlockAt }

@@ -45,7 +45,7 @@ function trimDays(state) {
 }
 
 function dailyCap(state) {
-  return DAILY_WISH_CAP + 5 * (state.permanentAmps.echo || 0)
+  return DAILY_WISH_CAP + 3 * (state.permanentAmps.echo || 0)
 }
 
 function touchDay(state, time = Date.now()) {
@@ -71,7 +71,7 @@ function touchDay(state, time = Date.now()) {
 
 function addWishRaw(state, rawAmount, reason, time = Date.now()) {
   const cap = dailyCap(state)
-  const echo = 1 + 0.05 * (state.permanentAmps.echo || 0)
+  const echo = 1 + 0.03 * (state.permanentAmps.echo || 0)
   let amount = Math.round(Math.max(0, rawAmount) * echo)
   if (rawAmount > 0 && amount < 1) amount = 1
   const room = Math.max(0, cap - state.activity.todayWish)

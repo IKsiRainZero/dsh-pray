@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0
+
+- Remove per-level run amplifiers entirely; each level now has a **layer note**: story + one technical term + how to use it (SemVer, AGI/MoE, latency/throughput, training/inference, scaling laws/emergence).
+- Add a hard **1e12 expectation cap** per run; release threshold is 1e12.
+- Replace multiplicative permanent/temporary bonuses with **additive** bonuses: soft release curve, achievements, launches, focus habits, version bonus, waiting bonus.
+- Level purchase growth is now ×1.5 per 10 (gentler than the AD ×2).
+- Rename permanent amplifiers to **long-term habits**; no UI string “amplifier”.
+- Bottom-right uses a burning flame: hover for a brief panel, move away to hide, click to expand; no full hide.
+- First-run notice title is now **“首先”**.
+- Attention mode buys levels only, at most 2 actions/tick, and pauses at the release cap.
+
 ## 0.4.1
 
 - Rebalance level cost growth to 1e3 / 1e4 / 1e5 / 1e6 / 1e7 per 10; the old Level 1 growth (×100) let attention-mode auto-buy run away.

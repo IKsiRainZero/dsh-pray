@@ -1,7 +1,7 @@
 {
   "name": "dsh-pray",
-  "version": "0.4.1",
-  "description": "一个本地单机的 DSH 增量小游戏：五层 Level、愿力、催更、发版、释怀，以及注意力保护模式。",
+  "version": "0.5.0",
+  "description": "一个本地单机的 DSH 增量小游戏：五层 Level、层内注脚、愿力、催更/发版、释怀，以及注意力保护模式。",
   "type": "module",
   "main": "./index.js",
   "exports": {
@@ -47,8 +47,8 @@
     "catalog": {
       "category": "ui",
       "summary": {
-        "en": "A local incremental game for DSH: five named levels, wish power, urges, launches, letting go, and attention protection.",
-        "zh": "本地单机的 DSH 增量小游戏：五层 Level、愿力、催更、发版、释怀，以及注意力保护模式。"
+        "en": "A local incremental game for DSH: five levels with per-level notes, wish power, urges, launches, letting go, and attention protection.",
+        "zh": "本地单机的 DSH 增量小游戏：五层 Level、层内注脚、愿力、催更/发版、释怀，以及注意力保护模式。"
       },
       "capabilities": [
         "webServer"
