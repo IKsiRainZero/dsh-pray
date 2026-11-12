@@ -6,7 +6,7 @@
  * first-class setting: automatic purchases, card hidden by default.
  */
 
-export const VERSION = '0.4.0'
+export const VERSION = '0.4.1'
 export const SCHEMA = 4
 
 export const RELEASE_THRESHOLD = 1e12
@@ -33,7 +33,7 @@ export const LEVELS = [
     index: 1,
     name: '期待下次更新',
     baseCost: 1,
-    costGrowth: 100,
+    costGrowth: 1e3,
     baseProduction: 1,
     unlockAt: 0,
     description: '直接产出期待。',
@@ -43,7 +43,7 @@ export const LEVELS = [
     index: 2,
     name: '别打扰梁叔叔搞AGI',
     baseCost: 10,
-    costGrowth: 1e3,
+    costGrowth: 1e4,
     baseProduction: 1,
     unlockAt: 1e3,
     description: '产出 Level 1。',
@@ -53,7 +53,7 @@ export const LEVELS = [
     index: 3,
     name: '谁给ds报名的憋气大赛？',
     baseCost: 1000,
-    costGrowth: 1e4,
+    costGrowth: 1e5,
     baseProduction: 1,
     unlockAt: 1e5,
     description: '产出 Level 2。',
@@ -63,7 +63,7 @@ export const LEVELS = [
     index: 4,
     name: 'Pro来✋🏻😡🤚🏻',
     baseCost: 1e5,
-    costGrowth: 1e5,
+    costGrowth: 1e6,
     baseProduction: 1,
     unlockAt: 1e7,
     description: '产出 Level 3。',
@@ -73,7 +73,7 @@ export const LEVELS = [
     index: 5,
     name: '我们的deepseek···会变成什么样子',
     baseCost: 1e7,
-    costGrowth: 1e6,
+    costGrowth: 1e7,
     baseProduction: 1,
     unlockAt: 1e9,
     description: '产出 Level 4。',

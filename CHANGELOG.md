@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+- Rebalance level cost growth to 1e3 / 1e4 / 1e5 / 1e6 / 1e7 per 10; the old Level 1 growth (×100) let attention-mode auto-buy run away.
+- Attention mode now pauses buying when the run can 释怀 and caps auto actions per tick.
+- Add **Start a fresh run** (keeps wish power, release, achievements, archive) and an out-of-range warning for old runaway saves.
+
 ## 0.4.0
 
 - Rename **Boost** → **催更** and **Galaxy** → **发版**; remove the image level and name Level 5 “我们的deepseek···会变成什么样子”.

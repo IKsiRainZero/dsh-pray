@@ -453,10 +453,13 @@ export function buyPermanentAmp(state, id) {
  */
 export function applyAuto(state, passes = 3) {
   if (state.settings?.mode !== 'attention') return 0
+  if (state.runExpectation >= RELEASE_THRESHOLD) return 0
   let actions = 0
   for (let pass = 0; pass < passes; pass += 1) {
+    if (actions >= 6) break
     let changed = false
     for (const def of LEVELS) {
+      if (actions >= 6) break
       if (state.lifetimeExpectation < def.unlockAt) continue
       const plan10 = levelCost(state, def.id, 10)
       if (plan10?.affordable && plan10.purchased === 10) {
@@ -470,6 +473,7 @@ export function applyAuto(state, passes = 3) {
       }
     }
     for (const def of RUN_AMPS) {
+      if (actions >= 6) break
       const cost = runAmpCost(state, def)
       if (state.expectation >= cost) {
         const result = buyRunAmp(state, def.id)
@@ -479,6 +483,24 @@ export function applyAuto(state, passes = 3) {
     if (!changed) break
   }
   return actions
+}
+
+/**
+ * A deliberate fresh run. Keeps meta progress: wish power, release points,
+ * achievements, archive, story/era records, and settings. Resets all run
+ * numbers, including lifetime, so Level 1 is the current Level again.
+ */
+export function resetRun(state, now = Date.now()) {
+  state.expectation = 0
+  state.lifetimeExpectation = 0
+  state.runExpectation = 0
+  state.levels = emptyLevels()
+  state.runAmps = Object.fromEntries(RUN_AMPS.map((def) => [def.id, 0]))
+  state.urges = 0
+  state.launches = 0
+  state.lastOffline = null
+  state.lastTickAt = iso(now)
+  return { ok: true }
 }
 
 export function currentUrgeCost(state) {

@@ -117,9 +117,16 @@ window.__ModuleLoader__.load({
         mode: '模式',
         modeAttention: '注意力保护',
         modePlay: '游玩模式',
-        modeAttentionDesc: '自动买 Level 和本轮增幅器；不自动催更/发版/释怀。卡片默认隐藏，想看时从侧栏打开。',
+        modeAttentionDesc: '自动买 Level 和本轮增幅器；不自动催更/发版/释怀，到可释怀时会暂停购买。卡片默认隐藏，想看时从侧栏打开。',
         modePlayDesc: '手动购买；适合想认真玩一会儿的时候。',
         autoBuying: '自动购买中 · 不自动重置',
+        autoPaused: '自动购买已暂停：本轮已可释怀，先把决定留给你。',
+        resetRun: '重开本轮',
+        resetRunNote: '保留愿力、释怀、成就、档案；清空本轮期待、Level、催更/发版、增幅器。',
+        resetRunConfirm: '再点一次确认：本轮进度会清空，愿力/释怀/成就保留。',
+        resetRunDone: '本轮已重开。',
+        anomalyTitle: '数值异常',
+        anomalyDesc: '检测到本轮数值已经失衡（旧版自动购买跑飞）。建议重开本轮；愿力、释怀、成就保留。',
         switchToPlay: '切到游玩模式',
         switchToAttention: '切到注意力保护',
         cardVisible: '右下角卡片',
@@ -251,9 +258,16 @@ window.__ModuleLoader__.load({
         mode: 'Mode',
         modeAttention: 'Attention protection',
         modePlay: 'Play mode',
-        modeAttentionDesc: 'Automatically buys levels and run amplifiers; never auto-resets. The card is hidden by default; open it from the sidebar.',
+        modeAttentionDesc: 'Automatically buys levels and run amplifiers; never auto-resets. It pauses buying when this run can let go. The card is hidden by default; open it from the sidebar.',
         modePlayDesc: 'Manual purchases; for when you want to play for a bit.',
         autoBuying: 'Auto-buying · no auto-reset',
+        autoPaused: 'Auto-buy paused: this run can already let go; the decision is yours.',
+        resetRun: 'Start a fresh run',
+        resetRunNote: 'Keeps wish power, release, achievements, and archive; clears this run’s expectation, levels, urges, launches, and amplifiers.',
+        resetRunConfirm: 'Click again: this run’s progress clears; wish power, release, and achievements stay.',
+        resetRunDone: 'Fresh run started.',
+        anomalyTitle: 'Numbers out of range',
+        anomalyDesc: 'This run’s numbers are out of balance (the old auto-buy ran away). Start a fresh run; wish power, release, and achievements stay.',
         switchToPlay: 'Switch to play mode',
         switchToAttention: 'Switch to attention protection',
         cardVisible: 'Bottom-right card',
@@ -901,6 +915,8 @@ window.__ModuleLoader__.load({
           setNotice(t('urgeDone'))
         } else if (result?.ok && body.type === 'launch') {
           setNotice(t('launchDone'))
+        } else if (result?.ok && body.type === 'resetRun') {
+          setNotice(t('resetRunDone'))
         }
       }
 
@@ -935,10 +951,29 @@ window.__ModuleLoader__.load({
       const permanentAmps = state.permanentAmps || []
       const auto = state.mode === 'attention'
       const achievements = state.achievements || []
+      const anomaly = state.lifetimeExpectation > 1e18 || state.expectationPerSecond > 1e12
 
       const renderLevel = () => h(
         React.Fragment,
         null,
+        anomaly
+          ? h(
+              'div',
+              { className: 'dsh-pray-panelcard', style: { marginBottom: 12, borderColor: 'var(--dsw-alias-state-warn-primary)' } },
+              h('div', { className: 'dsh-pray-cardtitle', style: { color: 'var(--dsw-alias-state-warn-primary)' } }, t('anomalyTitle')),
+              h('div', { className: 'dsh-pray-note', style: { marginTop: 6 } }, t('anomalyDesc')),
+              h(
+                'div',
+                { className: 'dsh-pray-actions' },
+                confirmReset === 'resetRun'
+                  ? h(React.Fragment, null,
+                      h('button', { className: 'dsh-pray-btn warn', disabled: busy, onClick: () => run({ type: 'resetRun' }) }, t('resetRunConfirm')),
+                      h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset(null) }, t('cancel')),
+                    )
+                  : h('button', { className: 'dsh-pray-btn warn', onClick: () => setConfirmReset('resetRun') }, t('resetRun')),
+              ),
+            )
+          : null,
         h(
           'div',
           { className: 'dsh-pray-modebar' },
@@ -946,7 +981,7 @@ window.__ModuleLoader__.load({
             'div',
             null,
             h('div', { className: 'dsh-pray-note' }, h('strong', null, auto ? t('modeAttention') : t('modePlay'))),
-            h('div', { className: 'dsh-pray-note' }, auto ? t('autoBuying') : t('modePlayDesc')),
+            h('div', { className: 'dsh-pray-note' }, auto ? (state.canRelease ? t('autoPaused') : t('autoBuying')) : t('modePlayDesc')),
           ),
           h('button', { className: 'dsh-pray-btn', onClick: () => run({ type: 'setMode', mode: auto ? 'play' : 'attention' }) }, auto ? t('switchToPlay') : t('switchToAttention')),
         ),
@@ -1192,6 +1227,22 @@ window.__ModuleLoader__.load({
             h('button', { className: `dsh-pray-btn${!auto ? ' primary' : ''}`, onClick: () => run({ type: 'setMode', mode: 'play' }) }, t('modePlay')),
           ),
           h('div', { className: 'dsh-pray-note', style: { marginTop: 8 } }, t('modePlayDesc')),
+        ),
+        h(
+          'div',
+          { className: 'dsh-pray-panelcard', style: { marginBottom: 12 } },
+          h('div', { className: 'dsh-pray-cardtitle' }, t('resetRun')),
+          h('div', { className: 'dsh-pray-note', style: { marginTop: 8 } }, t('resetRunNote')),
+          h(
+            'div',
+            { className: 'dsh-pray-actions' },
+            confirmReset === 'resetRun'
+              ? h(React.Fragment, null,
+                  h('button', { className: 'dsh-pray-btn warn', disabled: busy, onClick: () => run({ type: 'resetRun' }) }, t('resetRunConfirm')),
+                  h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset(null) }, t('cancel')),
+                )
+              : h('button', { className: 'dsh-pray-btn', onClick: () => setConfirmReset('resetRun') }, t('resetRun')),
+          ),
         ),
         h(
           'div',

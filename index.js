@@ -24,6 +24,7 @@ import {
   advance,
   migrateState,
   release,
+  resetRun,
   syncEra,
   view,
 } from './game/engine.js'
@@ -32,7 +33,7 @@ import { onSessionCreated, onSessionDisposed, onSessionEvent } from './game/acti
 export const name = 'dsh-pray'
 export const inject = ['webServer']
 
-const VERSION = '0.4.0'
+const VERSION = '0.4.1'
 const DEFAULT_CHANGELOG_URL = 'https://api-docs.deepseek.com/zh-cn/updates.md'
 const CHANGELOG_TTL_MS = 30 * 60 * 1000
 const CHANGELOG_RETRY_MS = 2 * 60 * 1000
@@ -239,6 +240,8 @@ async function handleAction(req, res, statePromise) {
     result = launch(state)
   } else if (type === 'release') {
     result = release(state, Date.now())
+  } else if (type === 'resetRun') {
+    result = resetRun(state, Date.now())
   } else if (type === 'setMode') {
     const mode = String(payload.mode || '')
     if (mode !== 'attention' && mode !== 'play') {

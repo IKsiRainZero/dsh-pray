@@ -10,6 +10,7 @@ import {
   migrateState,
   release,
   releaseGain,
+  resetRun,
   syncEra,
   urge,
   view,
@@ -105,6 +106,34 @@ const achievementState = createState(now)
 achievementState.release = 1
 checkAchievements(achievementState)
 assert.ok(achievementState.achievements.includes('first_release'))
+
+const pausedAuto = createState(now)
+pausedAuto.settings.mode = 'attention'
+pausedAuto.expectation = 1e6
+pausedAuto.runExpectation = 1e12
+applyAuto(pausedAuto)
+assert.equal(pausedAuto.levels.level1.owned, 0, 'auto pauses at release threshold')
+
+const resetState = createState(now)
+resetState.expectation = 123
+resetState.lifetimeExpectation = 456
+resetState.runExpectation = 456
+resetState.wish = 9
+resetState.release = 2
+resetState.achievements = ['first_release']
+resetState.levels.level1 = { owned: 10, bought: 10, produced: 99 }
+resetState.urges = 3
+resetState.launches = 1
+const resetResult = resetRun(resetState, now)
+assert.equal(resetResult.ok, true)
+assert.equal(resetState.lifetimeExpectation, 0)
+assert.equal(resetState.expectation, 0)
+assert.equal(resetState.levels.level1.owned, 0)
+assert.equal(resetState.urges, 0)
+assert.equal(resetState.launches, 0)
+assert.equal(resetState.wish, 9, 'reset keeps wish')
+assert.equal(resetState.release, 2, 'reset keeps release')
+assert.ok(resetState.achievements.includes('first_release'))
 
 const activity = createState(now)
 const session = { id: 's1', header: { createdAt: now } }
