@@ -1,0 +1,76 @@
+{
+  "name": "dsh-pray",
+  "version": "0.2.0",
+  "description": "一个本地单机的 DSH 增量小游戏：期待、愿力、释怀，跟着 DeepSeek 的更新日志长。",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "game/*.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "assets/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "deepseek",
+    "incremental-game",
+    "idle-game"
+  ],
+  "license": "MIT",
+  "engines": {
+    "dsh": ">=0.2.1-rc.1 <0.3.0-0",
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    },
+    "catalog": {
+      "category": "ui",
+      "summary": {
+        "en": "A local incremental game for DSH: expectation, wish power, and letting go, growing with DeepSeek's changelog.",
+        "zh": "本地单机的 DSH 增量小游戏：期待、愿力、释怀，跟着 DeepSeek 的更新日志长。"
+      },
+      "capabilities": [
+        "webServer"
+      ]
+    }
+  },
+  "author": "dsh-pray contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IKsiRainZero/dsh-pray.git"
+  },
+  "homepage": "https://github.com/IKsiRainZero/dsh-pray#readme",
+  "bugs": {
+    "url": "https://github.com/IKsiRainZero/dsh-pray/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node test-engine.mjs && node test-host.mjs",
+    "test:engine": "node test-engine.mjs",
+    "test:host": "node test-host.mjs"
+  }
+}

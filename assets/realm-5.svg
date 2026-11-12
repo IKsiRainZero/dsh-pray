@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="bd" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101528"/>
+      <stop offset="1" stop-color="#1c1430"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bd)"/>
+  <rect x="16" y="16" width="608" height="328" rx="20" fill="none" stroke="#8b7cf6" stroke-opacity=".35" stroke-width="2" stroke-dasharray="8 10"/>
+  <circle cx="320" cy="154" r="48" fill="none" stroke="#ffb45e" stroke-opacity=".5" stroke-width="2"/>
+  <path d="M320 118c4 15 18 22 18 39a18 18 0 1 1-36 0c0-10 6-18 11-23 1 6 4 10 7 12 2-7 3-16 0-28Z" fill="#ffb45e" fill-opacity=".85"/>
+  <text x="320" y="238" text-anchor="middle" fill="#f4f1ff" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="22">境界 5 · 截图待补</text>
+  <text x="320" y="270" text-anchor="middle" fill="#a9a4bd" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="14">把图片放到 plugin/assets/realm-5.png</text>
+</svg>
